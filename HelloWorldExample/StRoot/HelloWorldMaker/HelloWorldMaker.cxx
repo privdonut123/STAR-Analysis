@@ -1,0 +1,108 @@
+#include "HelloWorldMaker.h"
+/*
+//#include "StRoot/StRefMultCorr/StRefMultCorr.h"   //use for condor (?) this is what the code originally used
+//#include "StRoot/StRefMultCorr/StRefMultCorr.h"		//use for local (?)
+//#include "/star/u/iupsal/git/StRoot/offline/users/hmasui/StRefMultCorr"	//checked out from hmasui "cvs co offline/users/hmasui/StRefMultCorr" is this okay??
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+//#include "StRefMultCorr/StRefMultCorr.h"		//doesn't work
+#include "StMuDSTMaker/COMMON/StMuDstMaker.h"
+#include "StMuDSTMaker/COMMON/StMuTrack.h"
+#include "StMuDSTMaker/COMMON/StMuEvent.h"
+
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
+#include "TProfile.h"
+#include "TProfile2D.h"
+#include "TMath.h"
+#include "TFile.h"
+#include "TObjArray.h"
+#include "TList.h"
+#include "TString.h"
+#include "TRandom.h"                            // Used in PID selection
+#include "TRandom3.h"                            // Used in PID selection
+#include "TVector2.h"
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include <StRunInfo.h>
+#include <StEventInfo.h>
+#include <StHelix.hh>
+#include "StThreeVector.hh"
+#include "StPhysicalHelix.hh"
+#include "StThreeVectorF.hh"
+
+
+#define NumberOfTH1F      200                    // Number of Histograms (must be less than max in .h file)
+#define NumberOfTH2F      50                    // Number of Histograms (must be less than max in .h file)
+#define NumberOfTH3F      50                    // Number of Histograms (must be less than max in .h file)
+#define NumberOfTProfile  100                    // Number of Histograms (must be less than max in .h file)
+
+#define MinTracks         0                    // Discard events with fewer than MinTracks (Flow with 2 tracks makes no sense :-)
+#define MinEvents         0                    // Discard DST data when we have fewer than MinEvents on a file sequence
+#define pi                TMath::Pi()
+
+#define NMAX         10000
+float DataArray[NMAX][20];
+int ran_map[NMAX];
+
+*/
+ClassImp(HelloWorldMaker)
+
+HelloWorldMaker::HelloWorldMaker(const char* name) : StMaker(name)
+{ // Initialize and/or zero all public/private data members here.
+  /*for ( Int_t i = 0 ; i < NumberOfTH1F ; i++ )  // Zero the histogram pointerOBs
+    {
+      histogram[i] = NULL    ;
+    }
+
+  for ( Int_t i = 0 ; i < NumberOfTH2F ; i++ )  // Zero the 2D histogram pointers
+    {
+      histogram2D[i] = NULL  ;
+    }
+
+  for ( Int_t i = 0 ; i < NumberOfTH3F ; i++ )  // Zero the 2D histogram pointers
+    {
+      histogram3D[i] = NULL  ;
+    }
+
+  for ( Int_t i = 0 ; i < NumberOfTProfile ; i++ )  // Zero the Profile histogram pointers
+    {
+      histogramTProfile[i] = NULL  ;
+      histogramTProfile2D[i] = NULL  ;
+    }
+
+  mHistogramOutput  =  NULL  ;                  // Zero the pointer to histogram output file
+
+
+  mMuDstMaker       =  maker ;                  // Pass MuDst pointer to AnlysisMaker class member functions
+
+  mEventsStarted    =  0     ;
+  mEventsProcessed  =  0     ;                  // Zero the Number of Events processed by the maker
+
+  mHistogramOutputFileName = "" ;               // Histogram Output File Name will be set inside the .C macro
+  */
+  }
+
+ 
+
+HelloWorldMaker::~HelloWorldMaker()
+
+{
+  // Destroy and/or zero out all public/private data members here.
+}
+Int_t HelloWorldMaker::Init( )
+ { // Do once at the start of the analysis, create histograms, etc.
+   cout << endl << "Initializing, please wait..." << endl << endl;
+   return kStOK;
+ }
+Int_t HelloWorldMaker::Make( )
+ { // Do every event
+   cout << endl << "Hello World" << endl << endl;
+ return kStOK ; }
+Int_t HelloWorldMaker::Finish( )
+ { // Do once at the end of the analysis, close files, etc.
+   cout << endl << "Finishing, please wait..." << endl << endl;
+   return kStOK;
+ }
