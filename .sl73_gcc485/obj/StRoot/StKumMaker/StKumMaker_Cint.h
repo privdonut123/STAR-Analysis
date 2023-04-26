@@ -80,6 +80,7 @@ extern G__linked_taginfo G__StKumMaker_CintLN_TMatrixTSparseRowlEfloatgR;
 extern G__linked_taginfo G__StKumMaker_CintLN_TMatrixTSparseDiaglEfloatgR;
 extern G__linked_taginfo G__StKumMaker_CintLN_StFcsDb;
 extern G__linked_taginfo G__StKumMaker_CintLN_StMuDstMaker;
+extern G__linked_taginfo G__StKumMaker_CintLN_TH2F;
 extern G__linked_taginfo G__StKumMaker_CintLN_StFcsCollection;
 extern G__linked_taginfo G__StKumMaker_CintLN_StKumMaker;
 

@@ -22,32 +22,7 @@ void Analysis(Int_t nFiles = 1,
     //TString opt = "in MakeEvent evout tpcDb trgd fcsDat fcsWFF fcsCluster fcsPoint";
 
 // Load libraries
-/*
-gROOT -> Macro("loadMuDst.C");
-gROOT->Macro("Load.C");
-gROOT->Macro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
-  gSystem->Load("StTpcDb");
-    gSystem->Load("St_db_Maker");
-    gSystem->Load("StDaqLib");
-    gSystem->Load("StDbBroker");
-    gSystem->Load("StDbUtilities");
-    gSystem->Load("StDetectorDbMaker");
 
-    //gSystem->Load("StEEmcDbMaker");
-    //gSystem->Load("StEEmcUtil");
-    //gSystem->Load("StEmcRawMaker");
-    //gSystem->Load("StEmcADCtoEMaker");
-    //gSystem->Load("StEmcTriggerMaker");
-    gSystem->Load("StEpcMaker");
-    gSystem->Load("StEventMaker");
-    //gSystem->Load("StMCAsymMaker");
-    //gSystem->Load("StPreEclMaker");
-    //gSystem->Load("StRandomSelector");
-    //gSystem->Load("StSpinDbMaker");
-    //gSystem->Load("StTriggerFilterMaker");
-    //gSystem->Load("StTriggerUtilities");
-	gSystem->Load("StFcsDbMaker");
-*/
 gROOT->Macro("Load.C");
 gROOT->Macro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
 gSystem->Load("StEventMaker");
@@ -59,12 +34,13 @@ gSystem->Load("StFcsClusterMaker");
 gSystem->Load("libMinuit");
 gSystem->Load("StFcsPointMaker");
 gSystem->Load("StEpdUtil");
-gSystem->Load("StFcsEventDisplay");    
+gSystem->Load("StFcsEventDisplay");
+gSystem->Load("StFcsTrackMaker")  ;  
 gSystem -> Load("StKumMaker.so") ;
 
-//gMessMgr->SetLimit("I",0);
-//gMessMgr->SetLimit("Q",0);
-//gMessMgr->SetLimit("W",0);
+gMessMgr->SetLimit("I",0);
+gMessMgr->SetLimit("Q",0);
+gMessMgr->SetLimit("W",0);
  
 TString OutputFileName;
 
@@ -73,10 +49,6 @@ cout << InputFileList.Data() << endl;
 cout << OutputFileName << endl;
 //char edout[200];
 StChain* chain = new StChain();
-
-
- 
-
  
 StMuDstMaker* muDstMaker = new StMuDstMaker(0,0,"",InputFileList,"MuDst",nFiles);
 //components for spin db maker
@@ -145,8 +117,7 @@ Int_t nEvents = 5;
 cout << "\033[1;31m" << "Chain initiating, please wait" << "\033[0m\n" << endl;
 chain -> Init();
 //chain-> InitRun();
-//cout << "It's so sad that Steve Jobs died of ligma+1" << endl;
-//cout << "\033[1;31mbold red text\033[0m\n" << endl;
+
 cout <<  chain -> GetNTotal() << endl ;
 chain -> EventLoop(0,nEvents);
 cout << "\033[1;31m" << "Chain finishing, please wait" << "\033[0m\n" << endl;

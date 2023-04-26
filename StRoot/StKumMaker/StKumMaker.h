@@ -30,6 +30,7 @@ class StFcsDb;
 class StFcsDbMaker;
 class StFcsCollection;
 class StFcsEventDisplay;
+class StFcsTracker;
 
 #define MaxNumberOfTH1F      100
 #define MaxNumberOfTH2F      100
@@ -51,6 +52,17 @@ class StKumMaker : public StMaker
       TH1F* h1list_mass_by_Stower[748];      //h1list_mass_by_Stower: invariant mass sorted by highest energy tower[64]
       TH1F* h1list_NEtower[748];             //h1list_NEtower: energy spectrum for north Ecal tower (no cut)
       TH1F* h1list_SEtower[748];             //h1list_SEtower: energy spectrum for south Ecal tower (no cut)
+
+      TH1F* h1_two_cluster_energy_nocut = 0;   //h1_two_point_energy_nocut:2 point energy(no cut)
+      TH1F* h1_each_cluster_energy = 0;        //h1_each_cluster_energy:each cluster energy(no cut)
+      TH1F* h1_Zgg_nocut_cluster = 0;          //h1_Zgg_nocut_cluster:Zgg without cut
+      TH1F* h1_inv_mass_cluster_nocut = 0;
+
+      TH2F* h2_cluster_position = 0;        //h2_cluster_position
+
+      int bins = 150;
+      float m_low = 0;
+      float m_up = 0.4;
       //TH2F*         histogram2D[MaxNumberOfTH2F] ;     //  2D Histograms
       //TH3F*         histogram3D[MaxNumberOfTH3F] ;     //  3D Histograms
       
@@ -85,7 +97,7 @@ class StKumMaker : public StMaker
 
       StKumMaker(const char* name = "hello")   ;          //  Constructor
       virtual          ~StKumMaker( )   ;          //  Destructor
-      Int_t Init    ( ) ;                               //  Initiliaze the analysis tools ... done once
+      Int_t Init    ( ) ;                               //  Initialize the analysis tools ... done once
       //Int_t InitRun (int runNo);
       //Int_t FinishRun(int oldRunNo);
       Int_t Make    ( ) ;                               //  The main analysis that is done on each event

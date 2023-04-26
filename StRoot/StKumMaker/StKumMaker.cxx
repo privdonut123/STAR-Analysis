@@ -103,72 +103,77 @@ const std::string reset("\033[0m");
 ClassImp(StKumMaker)
 
 StKumMaker::StKumMaker(const char* name) : StMaker(name)
-{ // Initialize and/or zero all public/private data members here.
-  //histogram = NULL;
-  //histogram[1] = NULL;
-  /*
-  for ( Int_t i = 0 ; i < NumberOfTH1F ; i++ )  // Zero the histogram pointerOBs
-    {
-      histogram[i] = NULL    ;
-    }
-  */
-  mMuDstMaker  = 0   ; //Without this, maker is not defined in scope. Why?
-  mHistogramOutput  =  NULL  ;                  // Zero the pointer to histogram output file
-  //evnt = NULL ;
+  { // Initialize and/or zero all public/private data members here.
+    //histogram = NULL;
+    //histogram[1] = NULL;
+    
+    for ( Int_t i = 0 ; i < NumberOfTH1F ; i++ )  // Zero the histogram pointerOBs
+      {
+        h1list_mass_by_Ntower[i] = NULL;      //h1list_mass_by_Ntower: invariant mass sorted by highest energy tower[64]
+        h1list_mass_by_Stower[i] = NULL;      //h1list_mass_by_Stower: invariant mass sorted by highest energy tower[64]
+        h1list_NEtower[i] = NULL;             //h1list_NEtower: energy spectrum for north Ecal tower (no cut)
+        h1list_SEtower[i] = NULL;
+      }
+    
+    mMuDstMaker  = NULL   ; //Without this, maker is not defined in scope. Why?
+    mHistogramOutput  =  NULL  ;                  // Zero the pointer to histogram output file
+    //evnt = NULL ;
 
-  //mMuDstMaker       =  maker ;                  // Pass MuDst pointer to AnlysisMaker class member functions
+    //mMuDstMaker       =  maker ;                  // Pass MuDst pointer to AnlysisMaker class member functions
 
-  mEventsStarted    =  0     ;
-  mEventsProcessed  =  0     ;                  // Zero the Number of Events processed by the maker
+    mEventsStarted    =  0     ;
+    mEventsProcessed  =  0     ;                  // Zero the Number of Events processed by the maker
 
-  mHistogramOutputFileName = "" ;               // Histogram Output File Name will be set inside the .C macro
-  
-}
+    mHistogramOutputFileName = "" ;               // Histogram Output File Name will be set inside the .C macro
+    
+  }
 StKumMaker::~StKumMaker()
-
-{
-  // Destroy and/or zero out all public/private data members here.
-}
+  {
+    // Destroy and/or zero out all public/private data members here.
+  } 
 
 Int_t StKumMaker::Init( )
- { // Do once at the start of the analysis, create histograms, etc.
-   cout << endl << "Initializing, please wait..." << endl << endl;
-	mFcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb"));
-if (!mFcsDb) {
-      LOG_ERROR << "StFcsEventDisplay::Init Failed to get StFcsDbMaker" << endm;
-      return kStFatal;}
-
-
-      for (int i = 0; i < 748; i++) {
-        char name_hist[50];
-      char title_hist[100];
-        sprintf(name_hist, "NEtower_%i", i);
-      sprintf(title_hist, "North %i tower energy spectrum", i + 1);
-      h1list_NEtower[i] = new TH1F(name_hist, title_hist, 200, 0, 20);
-      h1list_NEtower[i]->SetXTitle("Energy [GeV]");
-      sprintf(name_hist, "SEtower_%i", i);
-      sprintf(title_hist, "South %i tower energy spectrum", i + 1);
-      h1list_SEtower[i] = new TH1F(name_hist, title_hist, 200, 0, 20);
-      h1list_SEtower[i]->SetXTitle("Energy [GeV]");
+ { 
+  // Do once at the start of the analysis, create histograms, etc.
+    cout << endl << "Initializing, please wait..." << endl << endl;
+	  mFcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb")); 
+    if (!mFcsDb) 
+      {
+        LOG_ERROR << "StFcsEventDisplay::Init Failed to get StFcsDbMaker" << endm;
+        return kStFatal;
       }
-  
-   //mHistogramOutput = new TFile( "output.root" , "recreate" ) ;  // Name was set in "analysis".C macro
-   //cout << "Creating ROOT File"  <<  endl;
-   //tree = new TTree("MyTree","Example Tree");
-   //tree->Branch("branch", "TH1F", &histogram, 128000, 0);
-   //cout << "tree created" << endl;
-   //tree->BuildIndex("Run","Event");
-   //TCanvas* nCanvas[2] ;
-   
-   //histogram[0] = new TH1F("pvpz", "Primary Vertex Positions, z", 100, -200 ,200)  ;
-   //histogram[1] = new TH1F("pvpx", "Primary Vertex Positions, x", 100, -200 ,200)  ;
-   //int start_of_run_17 = 1487656902;
-   //int end_of_run_17 = 1498565074;
-   //histogram = new TH1F("mTime", "Run Time ", end_of_run_17 - start_of_run_17 , start_of_run_17 , end_of_run_17)  ;
-   return kStOK;
 
-   
- }
+      for (int i = 0; i < 748; i++) 
+        {
+          char name_hist[50];
+          char title_hist[100];
+          sprintf(name_hist, "NEtower_%i", i);
+          sprintf(title_hist, "North %i tower energy spectrum", i + 1);
+          h1list_NEtower[i] = new TH1F(name_hist, title_hist, 200, 0, 20);
+          h1list_NEtower[i]->SetXTitle("Energy [GeV]");
+          sprintf(name_hist, "SEtower_%i", i);
+          sprintf(title_hist, "South %i tower energy spectrum", i + 1);
+          h1list_SEtower[i] = new TH1F(name_hist, title_hist, 200, 0, 20);
+          h1list_SEtower[i]->SetXTitle("Energy [GeV]");
+        }
+  h1_two_cluster_energy_nocut = new TH1F("h1_two_cluster_energy_nocut", "2 clusters energy(no cut)", bins, 0, 30);
+  h1_each_cluster_energy = new TH1F("h1_each_cluster_energy", "each cluster energy for FCS ECal", bins, 0, 25);
+  h1_Zgg_nocut_cluster = new TH1F("h1_Zgg_nocut_cluster", "Zgg without cut", bins, 0, 1);
+  h1_inv_mass_cluster_nocut = new TH1F("h1_inv_mass_cluster_nocut", "invariant mass plot (no cut)", bins, m_low, m_up);
+
+  h2_cluster_position = new TH2F("h2_cluster_position", "cluster_position", 300, -150, 150, 300, -150, 150);
+  
+  //mHistogramOutput = new TFile( "output.root" , "recreate" ) ;  // Name was set in "analysis".C macro
+  cout << "Creating ROOT File"  <<  endl;
+  /*
+  tree = new TTree("MyTree","Example Tree");
+  tree->Branch("branch", "TH1F", &histogram, 128000, 0);
+  cout << "tree created" << endl;
+  tree->BuildIndex("Run","Event");
+  TCanvas* nCanvas[2] ;
+  */
+    return kStOK;
+  }
 /*
  Int_t StKumMaker::InitRun(int runNo) {
    //gSystem->Exec("mkdir -p spins");
@@ -187,7 +192,7 @@ if (!mFcsDb) {
   mStSpinDbMaker = static_cast<StSpinDbMaker*>(GetMaker("spinDb"));
   mStSpinDbMaker->print(0);
   //cout << "testing, 1,2,3" << endl;
-  /*
+  
   for( int i=0; i<120; i++ ) {
     
     int bunch = mStSpinDbMaker->BXstarUsingBX48(i);
@@ -231,17 +236,16 @@ Int_t StKumMaker::FinishRun(int oldRunNo)
 */
 Int_t StKumMaker::Make()
   { // Do every event
-    cout << endl << "Hello World" << endl << endl;
+    cout << endl << "Loading in makers:" << endl << endl;
+
     mMuDstMaker = (StMuDstMaker*)GetInputDS("MuDst");
     if (!mMuDstMaker) 
       return kStWarn;
-    //cout << "error much?" <<endl; 
-
+    
     StMuDst* muDst = mMuDstMaker->muDst();
     if ( !muDst )      
       return kStOK ;
 
-    //StMuTrack* muTrack = (StMuTrack*)GetTracks.Next(); if (!mMuDstMaker) return kStWarn;
     StMuEvent* muEvent =  muDst->event();
     if ( !muEvent ) 
       return kStOK ;
@@ -249,13 +253,10 @@ Int_t StKumMaker::Make()
 	  StEvent* event = (StEvent*)GetInputDS("StEvent");
     if (!event) 
       {
-        LOG_ERROR << "\033[31mStFcsPi0FinderForEcal::Make did not find StEvent\033[m\n" << endm;
+        LOG_ERROR << "\033[31mStKumMaker::Make did not find StEvent\033[m\n" << endm;
         return kStErr;
       }
     
-    
-    cout << "\033[31m bolder red text\033[m\n" <<endl;
-
 	  mFcsColl = event->fcsCollection();
     if (!mFcsColl) 
       return kStOK;
@@ -267,16 +268,6 @@ Int_t StKumMaker::Make()
         return false;
       }
 
-    //const StTriggerId& trgIDs = TrigMuColl->nominal();
-    //Int_t ntrig = trgIDs.triggerIds().size();
-    //cout << "\033[31m" << ntrig << "\033[m\n" << endl;
-    cout << "\033[31mWho the hell is Steve Jobs?\033[m\n" << endl;
-    //for(Int_t i = 0; i < ntrig ; ++i){cout << trgIDs.triggerIds().at(i) << endl;}
-    //mFmsEventInfo->mNTrig = ntrig;
-   //cout << runNo << endl;
-   // Do 'event' analysis based on event pointers
-   //StMuEvent* muEvent = mMuDstMaker -> muDst()-> event() ;
-   //cout <<  "\033[32m" << muEvent -> eventInfo().time() << "\033[m\n" << endl;
     int total_nc = 0;
     int total_np = 0;
     int n_EcalMult = 0;
@@ -285,44 +276,41 @@ Int_t StKumMaker::Make()
     int n_Ecal_cut = 0;
     for (int det = 0; det < 2; det++) 
       {
-        int check_Ecal = mFcsDb->ecalHcalPres(det);
-        if (check_Ecal != 0) continue;
+        int check_Ecal = mFcsDb->ecalHcalPres(det); //Ecal North=0, Ecal South=1, Hcal North=2, Hcal South=3, Pres=4/5
+        if (check_Ecal != 0) 
+          { 
+            cout << red << "No Ecal found. Moving to the next " << reset << endl;
+            continue;
+          }
 
-        StSPtrVecFcsCluster& clusters = mFcsColl->clusters(det);
-        int nc = mFcsColl->numberOfClusters(det);
-        cout << "Number of clusters: " << nc << endl;
-        total_nc = nc + total_nc;
-
+        // Points are ignored for this section until more robust code written
         StSPtrVecFcsPoint& points = mFcsColl->points(det);
         int np = mFcsColl->numberOfPoints(det);
-
+        cout << green << "Number of points: " << np << reset << endl;
         total_np = np + total_np;
 
+        // no cut (hits)
         StSPtrVecFcsHit& hits = mFcsColl->hits(det);
         int nh = mFcsColl->numberOfHits(det);
-        cout << "Number of hits: " << nh << endl;
-        if (mDebug > 0) 
-        LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
+        cout << green << "Number of hits: " << nh << reset << endl;
         for (int i = 0; i < nh; i++) 
           {
             StFcsHit* hit = hits[i];
             unsigned short hit_id = hit->id();
             cout << red << hit_id << reset << endl;
             float hit_energy = hit->energy();
-            cout << "\033[32mEnergy of hit: " + to_string(hit_energy) + " GeV\033[m\n" <<  endl;
+            cout << green << "Energy of hit: " << hit->energy() << " GeV" <<  endl;
             if (det == 0) 
               {
-                cout << "\033[34mError after hit loop hit loop?\033[m\n" << endl;
-                if (h1list_NEtower[hit_id])
-                  {
-                    cout << cyan << "Filling North ECal histogram, tower " << hit_id << reset << endl;
-                  }
-                h1list_NEtower[hit_id]->Fill(3);
+                cout << cyan << "Filling North ECal histogram, tower " << hit_id << reset << endl;
+                h1list_NEtower[hit_id]->Fill(hit_energy);
                 cout << magenta << "Continuing" << reset << endl;
               } 
             else if (det == 1) 
               {
-                h1list_SEtower[hit_id]->Fill(3);
+                cout << cyan << "Filling South ECal histogram, tower " << hit_id << reset << endl;
+                h1list_SEtower[hit_id]->Fill(hit_energy);
+                cout << magenta << "Continuing" << reset << endl;
               }  //fill in energy spectrum for tower
             if (hit_energy > E_min)
               {
@@ -330,32 +318,62 @@ Int_t StKumMaker::Make()
               }
             n_EcalMult++;
           }
-            
 
-        			//no cut (cluster)
+        //no cut (cluster)    
+        StSPtrVecFcsCluster& clusters = mFcsColl->clusters(det);
+        int nc = mFcsColl->numberOfClusters(det);
+        cout << green << "Number of clusters: " << nc << reset << endl;
+        if (mDebug > 0) 
+          LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
+        total_nc = nc + total_nc;
         for (int i = 0; i < nc; i++) 
           {
             StFcsCluster* clu = clusters[i];
             float clu_energy = clu->energy();
-            float clu_x = clu->x();
-            float clu_y = clu->y();
-            StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu_x, clu_y);
+            cout << green << "Energy of cluster: " << clu->energy() << " GeV" << reset << endl;
+            cout << green << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << reset << endl;
+            cout << magenta << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << reset << endl;
+            StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
+            StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
             float cluPos_x = cluPos.x();
             float cluPos_y = cluPos.y();
+            cout << cyan << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << reset << endl;
 
             n_EcalClustMult++;
-            if ((clu_energy > E_min)) 
+            if (clu->energy() > E_min) 
               {
                 n_EcalClust_cut++;
               }
+            h2_cluster_position->Fill(cluPos.x(), cluPos.y());
+            h1_each_cluster_energy->Fill(clu_energy);
+            
+            if (i == nc - 1) 
+              continue;
+            for (int j = i + 1; j < nc; j++) 
+              {
+                StFcsCluster* cluj = clusters[j];
+                float cluj_energy = cluj->energy();
+                float cluj_x = cluj->x();
+                float cluj_y = cluj->y();
+                StThreeVectorD clujPos = mFcsDb->getStarXYZfromColumnRow(det, cluj_x, cluj_y);
+
+                h1_two_cluster_energy_nocut->Fill(clu_energy + cluj_energy);
+                float zgg = (abs(clu_energy - cluj_energy)) / (clu_energy + cluj_energy);
+                h1_Zgg_nocut_cluster->Fill(zgg);
+                StThreeVectorD xyzj = mFcsDb->getStarXYZfromColumnRow(det, cluj->x(), cluj->y());
+                StLorentzVectorD pj = mFcsDb->getLorentzVector((xyzj), cluj->energy(), 0);
+                h1_inv_mass_cluster_nocut->Fill((p + pj).m());
+              }
           }
+        if (mDebug > 0)
+          LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
 
       }
   
-   // histogram[0] -> Fill( muEvent -> primaryVertexPosition().z() ) ;
-      //   histogram[1] -> Fill( muEvent -> primaryVertexPosition().x() );
-      //histogram -> Fill( muEvent -> eventInfo().time());
-      //histogram -> SetAxisRange(start_time - 10, muEvent -> eventInfo().time() + 10 ,"X");
+    //histogram[0] -> Fill( muEvent -> primaryVertexPosition().z() ) ;
+    //histogram[1] -> Fill( muEvent -> primaryVertexPosition().x() );
+    //histogram -> Fill( muEvent -> eventInfo().time());
+    //histogram -> SetAxisRange(start_time - 10, muEvent -> eventInfo().time() + 10 ,"X");
    //histogram[1] -> Fill( muEvent -> refMult() );
    // cout << typeid( muEvent -> primaryVertexPosition().z()).name() << endl;
 
@@ -370,8 +388,15 @@ Int_t StKumMaker::Finish( )
    cout << endl << "Finishing, please wait..." << endl << endl;
    //tree->Print();
    //tree->Write();
-   //mHistogramOutput->Write() ;   // Write all histograms to disk
-   //mHistogramOutput->Close();
+  mHistogramOutput = new TFile( "output.root" , "recreate" ) ;
+  h1_two_cluster_energy_nocut->Write();
+  h1_each_cluster_energy->Write();
+  h1_Zgg_nocut_cluster->Write();
+  h1_inv_mass_cluster_nocut->Write();
+
+  h2_cluster_position->Write();
+  mHistogramOutput->Write() ;   // Write all histograms to disk
+  mHistogramOutput->Close();
    //histogram[0] -> Draw() ; 
    return kStOK;
  }
