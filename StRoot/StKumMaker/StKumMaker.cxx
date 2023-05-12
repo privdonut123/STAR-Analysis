@@ -15,7 +15,9 @@
 #include "StEvent/StEvent.h"
 #include "StEvent/StFcsCluster.h"
 #include "StEvent/StFcsCollection.h"
+#include "StEvent/StFwdTrackCollection.h"
 #include "StEvent/StFcsHit.h"
+#include "StEvent/StFwdTrack.h"
 #include "StEventTypes.h"
 #include "StFcsDbMaker/StFcsDbMaker.h"
 
@@ -43,6 +45,82 @@
 #include "StThreeVectorF.hh"
 
 #include <string>
+
+
+
+
+#include "StFwdTrackMaker/Common.h"
+
+#include "TMath.h"
+
+#include <limits>
+#include <map>
+#include <string>
+#include <string>
+#include <vector>
+
+#include "StBFChain/StBFChain.h"
+
+#include "StEvent/StEvent.h"
+#include "StEvent/StGlobalTrack.h"
+#include "StEvent/StHelixModel.h"
+#include "StEvent/StPrimaryTrack.h"
+#include "StEvent/StRnDHit.h"
+#include "StEvent/StRnDHitCollection.h"
+#include "StEvent/StTrack.h"
+#include "StEvent/StTrackGeometry.h"
+#include "StEvent/StTrackNode.h"
+#include "StEvent/StPrimaryVertex.h"
+#include "StEvent/StEnumerations.h"
+#include "StEvent/StTrackDetectorInfo.h"
+#include "StEvent/StFttPoint.h"
+#include "StEvent/StFcsHit.h"
+#include "StEvent/StFcsCluster.h"
+#include "StEvent/StFttCollection.h"
+#include "StEvent/StFcsCollection.h"
+#include "StEvent/StTriggerData.h"
+#include "StEvent/StFstHitCollection.h"
+#include "StEvent/StFstHit.h"
+#include "StEvent/StFwdTrackCollection.h"
+#include "StChain/StChainOpt.h"
+
+#include "StEventUtilities/StEventHelper.h"
+
+#include "tables/St_g2t_fts_hit_Table.h"
+#include "tables/St_g2t_track_Table.h"
+#include "tables/St_g2t_vertex_Table.h"
+#include "tables/St_g2t_event_Table.h"
+
+#include "StarMagField/StarMagField.h"
+
+#include "St_base/StMessMgr.h"
+#include "StarClassLibrary/StPhysicalHelix.hh"
+#include "StarClassLibrary/SystemOfUnits.h"
+
+
+#include "TROOT.h"
+#include "TLorentzVector.h"
+#include "StEvent/StFwdTrack.h"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 //From fcspi0
 
@@ -267,6 +345,14 @@ Int_t StKumMaker::Make()
         LOG_ERROR <<"StFmsMaker::PopulateEventInfo - !TrigMuColl" <<endl;
         return false;
       }
+/*
+    mFwdColl = event->fwdTrackCollection();
+    if (!mFwdColl)
+      {
+        cout << "No fwd collection " << endl;
+        return kStOK;
+      }
+*/      
 
     int total_nc = 0;
     int total_np = 0;
@@ -282,8 +368,23 @@ Int_t StKumMaker::Make()
             cout << red << "No Ecal found. Moving to the next " << reset << endl;
             continue;
           }
+        
+        StSPtrVecFwdTrack& tracks = mFwdColl->tracks();
+        /*
+        int nt = mFwdColl->numberOfTracks();
+        cout << green << "Number of tracks: " << nt << reset << endl;
+        for(int i = 0; i < nt; i++)
+          {
+            StFwdTrack* track = tracks[i];
+            cout << green << track->charge() << reset << endl;
+            //StThreeVectorD 	mome
+          }
+        */
+            //unsigned short track_id = hit->id();
+            //cout << red << hit_id << reset << endl;
+            //float hit_energy = track->;
 
-        // Points are ignored for this section until more robust code written
+        // Points are ignored for this section 
         StSPtrVecFcsPoint& points = mFcsColl->points(det);
         int np = mFcsColl->numberOfPoints(det);
         cout << green << "Number of points: " << np << reset << endl;

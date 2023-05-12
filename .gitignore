@@ -1,0 +1,9 @@
+.ipynb_checkpoints
+.sl73_gcc485
+.vscode
+.directory
+polarization.C
+daq
+daq.root
+fwdTrackerOutput.root
+fwdtree.root
