@@ -29,8 +29,9 @@ class TCanvas;
 class StFcsDb;
 class StFcsDbMaker;
 class StFcsCollection;
+class StFwdTrackCollection;
 class StFcsEventDisplay;
-class StFcsTracker;
+//class StFcsTracker;
 
 #define MaxNumberOfTH1F      100
 #define MaxNumberOfTH2F      100
@@ -89,6 +90,7 @@ class StKumMaker : public StMaker
       */
       StFcsDb* mFcsDb = 0;
       StFcsCollection* mFcsColl = 0;
+      StFwdTrackCollection* mFwdColl = 0;
     
     protected: 
       //StSpinDbMaker *mStSpinDbMaker;

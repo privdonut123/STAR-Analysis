@@ -25,6 +25,30 @@ void Analysis(Int_t nFiles = 1,
 
 gROOT->Macro("Load.C");
 gROOT->Macro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
+
+//gSystem->Load( "libStarRoot.so" );
+
+gROOT->SetMacroPath(".:./StRoot/macros:
+                    ./StRoot/macros/graphics:
+                    ./StRoot/macros/analysis:
+                    ./StRoot/macros/test:
+                    ./StRoot/macros/examples:
+                    ./StRoot/macros/html:
+                    ./StRoot/macros/qa:
+                    ./StRoot/macros/calib:
+                    ./StRoot/macros/mudst:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/graphics:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/analysis:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/test:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/examples:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/html:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/qa:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/calib:
+                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/mudst:
+                    /afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/macros:
+                    /afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/tutorials");
+
 gSystem->Load("StEventMaker");
 gSystem->Load("St_db_Maker");
 gSystem->Load("StFcsDbMaker");
@@ -35,7 +59,7 @@ gSystem->Load("libMinuit");
 gSystem->Load("StFcsPointMaker");
 gSystem->Load("StEpdUtil");
 gSystem->Load("StFcsEventDisplay");
-gSystem->Load("StFcsTrackMaker")  ;  
+gSystem->Load("StFwdTrackMaker")  ;  
 gSystem -> Load("StKumMaker.so") ;
 
 gMessMgr->SetLimit("I",0);
@@ -81,6 +105,7 @@ StFcsRawHitMaker* hitmk = new StFcsRawHitMaker();
     hitmk->setReadMuDst(readMuDst);
 StFcsWaveformFitMaker *wff= new StFcsWaveformFitMaker();
     wff->setEnergySelect(13,13,1);
+StFwdTrackMaker* track = new StFwdTrackMaker();
     //wff->SetDebug(debug);
     
 StFcsClusterMaker *clu= new StFcsClusterMaker;
