@@ -1,1 +1,0 @@
-../../../../../StRoot/StSpinPool/StFcsEventDisplay/StFcsEventDisplay.h
