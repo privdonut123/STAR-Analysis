@@ -1,0 +1,1 @@
+../../../../../StRoot/StFwd/StEvent/StRichCollection.h

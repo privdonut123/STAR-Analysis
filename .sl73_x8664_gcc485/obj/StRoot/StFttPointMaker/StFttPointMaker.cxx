@@ -1,0 +1,1 @@
+../../../../StRoot/StFttPointMaker/StFttPointMaker.cxx

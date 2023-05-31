@@ -1,0 +1,1 @@
+../../../../../StRoot/StMuDSTMaker/COMMON/StMuFstCollection.h

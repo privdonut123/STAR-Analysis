@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StFttCollection.h

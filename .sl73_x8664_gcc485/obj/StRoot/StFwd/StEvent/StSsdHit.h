@@ -1,0 +1,1 @@
+../../../../../StRoot/StFwd/StEvent/StSsdHit.h

@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StMwcTriggerDetector.h

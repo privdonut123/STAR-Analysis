@@ -1,0 +1,1 @@
+../../../../../StRoot/StFwd/StEvent/StIstLadderHitCollection.cxx

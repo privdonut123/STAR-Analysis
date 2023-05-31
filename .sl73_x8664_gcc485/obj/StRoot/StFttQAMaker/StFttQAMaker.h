@@ -1,0 +1,1 @@
+../../../../StRoot/StFttQAMaker/StFttQAMaker.h

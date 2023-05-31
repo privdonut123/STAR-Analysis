@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StEtrHitCollection.cxx
