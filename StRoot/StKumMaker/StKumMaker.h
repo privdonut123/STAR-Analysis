@@ -1,11 +1,18 @@
 #ifndef StKumMaker_def
 #define StKumMaker_def
 
-#include "StMaker.h"
+#include "StChain/StMaker.h"
 #include "TString.h"
 #include "TRandom3.h"
 #include "TVector3.h"
 #include <TTree.h>
+// ROOT includes
+#include "TNtuple.h"
+#include "TTree.h"
+// STL includes
+#include <vector>
+#include <memory>
+
 #include "StEvent/StTriggerId.h"
 #include "StMuDSTMaker/COMMON/StMuTriggerIdCollection.h"
 #include "StFcsDbMaker/StFcsDb.h"
@@ -29,15 +36,10 @@ class TCanvas;
 class StFcsDb;
 class StFcsDbMaker;
 class StFcsCollection;
-class StFwdTrackCollection;
+class StMuFwdTrackCollection;
 class StFcsEventDisplay;
 //class StFcsTracker;
-
-#define MaxNumberOfTH1F      100
-#define MaxNumberOfTH2F      100
-#define MaxNumberOfTH3F      100
-#define MaxNumberOfTProfile  200
-
+class StFwdTrack;
 
 
 class StKumMaker : public StMaker
@@ -53,11 +55,12 @@ class StKumMaker : public StMaker
       TH1F* h1list_mass_by_Stower[748];      //h1list_mass_by_Stower: invariant mass sorted by highest energy tower[64]
       TH1F* h1list_NEtower[748];             //h1list_NEtower: energy spectrum for north Ecal tower (no cut)
       TH1F* h1list_SEtower[748];             //h1list_SEtower: energy spectrum for south Ecal tower (no cut)
-
+      
       TH1F* h1_two_cluster_energy_nocut = 0;   //h1_two_point_energy_nocut:2 point energy(no cut)
       TH1F* h1_each_cluster_energy = 0;        //h1_each_cluster_energy:each cluster energy(no cut)
       TH1F* h1_Zgg_nocut_cluster = 0;          //h1_Zgg_nocut_cluster:Zgg without cut
       TH1F* h1_inv_mass_cluster_nocut = 0;
+      TH1F* h1_fwd_track_pt = 0;
 
       TH2F* h2_cluster_position = 0;        //h2_cluster_position
 
@@ -90,13 +93,12 @@ class StKumMaker : public StMaker
       */
       StFcsDb* mFcsDb = 0;
       StFcsCollection* mFcsColl = 0;
-      StFwdTrackCollection* mFwdColl = 0;
-    
+      StMuFwdTrackCollection* mFwdColl = 0;
     protected: 
       //StSpinDbMaker *mStSpinDbMaker;
 
     public:
-
+      //bool makerDebug();
       StKumMaker(const char* name = "hello")   ;          //  Constructor
       virtual          ~StKumMaker( )   ;          //  Destructor
       Int_t Init    ( ) ;                               //  Initialize the analysis tools ... done once

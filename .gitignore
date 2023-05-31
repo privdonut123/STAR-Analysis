@@ -7,3 +7,6 @@ daq
 daq.root
 fwdTrackerOutput.root
 fwdtree.root
+.sl73_x8664_gcc485
+check
+input/

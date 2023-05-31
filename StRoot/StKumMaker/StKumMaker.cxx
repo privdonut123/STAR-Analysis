@@ -1,9 +1,13 @@
 #include "StKumMaker.h"
-
+#include "StFwdTrackMaker/Common.h"
 
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <map>
+#include <string>
+#include <vector>
 
 #include "StMuDSTMaker/COMMON/StMuDstMaker.h"
 #include "StMuDSTMaker/COMMON/StMuTrack.h"
@@ -54,7 +58,7 @@
 #include "TMath.h"
 
 #include <limits>
-#include <map>
+//#include <map>
 #include <string>
 #include <string>
 #include <vector>
@@ -85,6 +89,10 @@
 #include "StChain/StChainOpt.h"
 
 #include "StEventUtilities/StEventHelper.h"
+
+#include "StMuDSTMaker/COMMON/StMuDstMaker.h"
+#include "StMuDSTMaker/COMMON/StMuDst.h"
+#include "StMuDSTMaker/COMMON/StMuFwdTrack.h"
 
 #include "tables/St_g2t_fts_hit_Table.h"
 #include "tables/St_g2t_track_Table.h"
@@ -168,8 +176,8 @@
 #define pi                TMath::Pi()
 
 #define NMAX         10000
-float DataArray[NMAX][20];
-int ran_map[NMAX];
+//float DataArray[NMAX][20];
+//int ran_map[NMAX];
 
 const std::string red("\033[0;31m");
 const std::string green("\033[1;32m");
@@ -210,10 +218,17 @@ StKumMaker::~StKumMaker()
     // Destroy and/or zero out all public/private data members here.
   } 
 
-Int_t StKumMaker::Init( )
+//bool StKumMaker::makerDebug()
+  map <string,bool> makerDebug = 
+    {
+      {"fwdTrk", true},
+      {"fcs", true}
+    };
+Int_t StKumMaker::Init()
  { 
+  //makerDebug();
   // Do once at the start of the analysis, create histograms, etc.
-    cout << endl << "Initializing, please wait..." << endl << endl;
+    LOG_INFO << endl << "Initializing, please wait..." << endl << endl;
 	  mFcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb")); 
     if (!mFcsDb) 
       {
@@ -238,11 +253,11 @@ Int_t StKumMaker::Init( )
   h1_each_cluster_energy = new TH1F("h1_each_cluster_energy", "each cluster energy for FCS ECal", bins, 0, 25);
   h1_Zgg_nocut_cluster = new TH1F("h1_Zgg_nocut_cluster", "Zgg without cut", bins, 0, 1);
   h1_inv_mass_cluster_nocut = new TH1F("h1_inv_mass_cluster_nocut", "invariant mass plot (no cut)", bins, m_low, m_up);
-
+  h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 5);
   h2_cluster_position = new TH2F("h2_cluster_position", "cluster_position", 300, -150, 150, 300, -150, 150);
   
   //mHistogramOutput = new TFile( "output.root" , "recreate" ) ;  // Name was set in "analysis".C macro
-  cout << "Creating ROOT File"  <<  endl;
+  //cout << "Creating ROOT File"  <<  endl;
   /*
   tree = new TTree("MyTree","Example Tree");
   tree->Branch("branch", "TH1F", &histogram, 128000, 0);
@@ -321,8 +336,13 @@ Int_t StKumMaker::Make()
       return kStWarn;
     
     StMuDst* muDst = mMuDstMaker->muDst();
-    if ( !muDst )      
-      return kStOK ;
+    if ( !muDst )
+      {
+        cout << red << "Failed to get MuDst from input" << reset << endl;
+        return kStOK ;
+      }
+    else
+      cout << red << "Got MuDst from input" << reset << endl;
 
     StMuEvent* muEvent =  muDst->event();
     if ( !muEvent ) 
@@ -345,15 +365,23 @@ Int_t StKumMaker::Make()
         LOG_ERROR <<"StFmsMaker::PopulateEventInfo - !TrigMuColl" <<endl;
         return false;
       }
-/*
-    mFwdColl = event->fwdTrackCollection();
-    if (!mFwdColl)
+//makerDebug().fwdTrk << endl;
+    
+    
+    if(makerDebug["fwdTrk"])
       {
-        cout << "No fwd collection " << endl;
-        return kStOK;
+        mFwdColl = muDst->muFwdTrackCollection();
+        if (!mFwdColl)
+          {
+            cout << "No fwd collection " << endl;
+            return kStOK;
+          }
+        else
+          {
+            cout << red << "Number of StMuFwdTracks: " << mFwdColl->numberOfFwdTracks() << reset << endl;
+          } 
       }
-*/      
-
+      
     int total_nc = 0;
     int total_np = 0;
     int n_EcalMult = 0;
@@ -369,7 +397,25 @@ Int_t StKumMaker::Make()
             continue;
           }
         
-        StSPtrVecFwdTrack& tracks = mFwdColl->tracks();
+        //StSPtrVecFwdTrack& tracks = mFwdColl->tracks();
+        
+        for ( size_t iTrack = 0; iTrack < mFwdColl->numberOfFwdTracks(); iTrack++ ){
+        StMuFwdTrack * muFwdTrack = mFwdColl->getFwdTrack( iTrack );
+        
+        LOG_INFO << TString::Format("\\033[0;31m StMuFwdTrack[ nProjections=%lu, nFTTSeeds=%lu, nFSTSeeds=%lu, mPt=%f, charge=%d ]",
+                                       muFwdTrack->mProjections.size(),
+                                       muFwdTrack->mFTTPoints.size(),
+                                       muFwdTrack->mFSTPoints.size(),
+                                       muFwdTrack->momentum().Pt(),
+                                       muFwdTrack->charge()) << endm;
+                                       /*printf("StMuFwdTrack[ nProjections=%lu, nFTTSeeds=%lu, nFSTSeeds=%lu, mPt=%f, charge=%d ]\n",
+                                       muFwdTrack->mProjections.size(),
+                                       muFwdTrack->mFTTPoints.size(),
+                                       muFwdTrack->mFSTPoints.size(),
+                                       muFwdTrack->momentum().Pt(),
+                                       muFwdTrack->charge());*/
+        h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
+    }
         /*
         int nt = mFwdColl->numberOfTracks();
         cout << green << "Number of tracks: " << nt << reset << endl;
@@ -384,101 +430,105 @@ Int_t StKumMaker::Make()
             //cout << red << hit_id << reset << endl;
             //float hit_energy = track->;
 
-        // Points are ignored for this section 
-        StSPtrVecFcsPoint& points = mFcsColl->points(det);
-        int np = mFcsColl->numberOfPoints(det);
-        cout << green << "Number of points: " << np << reset << endl;
-        total_np = np + total_np;
+        // Points are ignored for this section
+        //if(makerDebug["fcs"])
+          //{ 
+            cout << "fcs on" << endl;
+            StSPtrVecFcsPoint& points = mFcsColl->points(det);
+            int np = mFcsColl->numberOfPoints(det);
+            cout << green << "Number of points: " << np << reset << endl;
+            total_np = np + total_np;
 
-        // no cut (hits)
-        StSPtrVecFcsHit& hits = mFcsColl->hits(det);
-        int nh = mFcsColl->numberOfHits(det);
-        cout << green << "Number of hits: " << nh << reset << endl;
-        for (int i = 0; i < nh; i++) 
-          {
-            StFcsHit* hit = hits[i];
-            unsigned short hit_id = hit->id();
-            cout << red << hit_id << reset << endl;
-            float hit_energy = hit->energy();
-            cout << green << "Energy of hit: " << hit->energy() << " GeV" <<  endl;
-            if (det == 0) 
+            // no cut (hits)
+            StSPtrVecFcsHit& hits = mFcsColl->hits(det);
+            int nh = mFcsColl->numberOfHits(det);
+            cout << green << "Number of hits: " << nh << reset << endl;
+            for (int i = 0; i < nh; i++) 
               {
-                cout << cyan << "Filling North ECal histogram, tower " << hit_id << reset << endl;
-                h1list_NEtower[hit_id]->Fill(hit_energy);
-                cout << magenta << "Continuing" << reset << endl;
-              } 
-            else if (det == 1) 
-              {
-                cout << cyan << "Filling South ECal histogram, tower " << hit_id << reset << endl;
-                h1list_SEtower[hit_id]->Fill(hit_energy);
-                cout << magenta << "Continuing" << reset << endl;
-              }  //fill in energy spectrum for tower
-            if (hit_energy > E_min)
-              {
-                n_Ecal_cut++;
+                StFcsHit* hit = hits[i];
+                unsigned short hit_id = hit->id();
+                cout << red << hit_id << reset << endl;
+                float hit_energy = hit->energy();
+                cout << green << "Energy of hit: " << hit->energy() << " GeV" <<  endl;
+                if (det == 0) 
+                  {
+                    cout << cyan << "Filling North ECal histogram, tower " << hit_id << reset << endl;
+                    h1list_NEtower[hit_id]->Fill(hit_energy);
+                    cout << magenta << "Continuing" << reset << endl;
+                  } 
+                else if (det == 1) 
+                  {
+                    cout << cyan << "Filling South ECal histogram, tower " << hit_id << reset << endl;
+                    h1list_SEtower[hit_id]->Fill(hit_energy);
+                    cout << magenta << "Continuing" << reset << endl;
+                  }  //fill in energy spectrum for tower
+                if (hit_energy > E_min)
+                  {
+                    n_Ecal_cut++;
+                  }
+                n_EcalMult++;
               }
-            n_EcalMult++;
-          }
 
-        //no cut (cluster)    
-        StSPtrVecFcsCluster& clusters = mFcsColl->clusters(det);
-        int nc = mFcsColl->numberOfClusters(det);
-        cout << green << "Number of clusters: " << nc << reset << endl;
-        if (mDebug > 0) 
-          LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
-        total_nc = nc + total_nc;
-        for (int i = 0; i < nc; i++) 
-          {
-            StFcsCluster* clu = clusters[i];
-            float clu_energy = clu->energy();
-            cout << green << "Energy of cluster: " << clu->energy() << " GeV" << reset << endl;
-            cout << green << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << reset << endl;
-            cout << magenta << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << reset << endl;
-            StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
-            StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
-            float cluPos_x = cluPos.x();
-            float cluPos_y = cluPos.y();
-            cout << cyan << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << reset << endl;
-
-            n_EcalClustMult++;
-            if (clu->energy() > E_min) 
+            //no cut (cluster)    
+            StSPtrVecFcsCluster& clusters = mFcsColl->clusters(det);
+            int nc = mFcsColl->numberOfClusters(det);
+            cout << green << "Number of clusters: " << nc << reset << endl;
+            if (mDebug > 0) 
+              LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
+            total_nc = nc + total_nc;
+            for (int i = 0; i < nc; i++) 
               {
-                n_EcalClust_cut++;
+                StFcsCluster* clu = clusters[i];
+                float clu_energy = clu->energy();
+                cout << green << "Energy of cluster: " << clu->energy() << " GeV" << reset << endl;
+                cout << green << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << reset << endl;
+                cout << magenta << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << reset << endl;
+                StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
+                StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
+                float cluPos_x = cluPos.x();
+                float cluPos_y = cluPos.y();
+                cout << cyan << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << reset << endl;
+
+                n_EcalClustMult++;
+                if (clu->energy() > E_min) 
+                  {
+                    n_EcalClust_cut++;
+                  }
+                h2_cluster_position->Fill(cluPos.x(), cluPos.y());
+                h1_each_cluster_energy->Fill(clu_energy);
+                
+                if (i == nc - 1) 
+                  continue;
+                for (int j = i + 1; j < nc; j++) 
+                  {
+                    StFcsCluster* cluj = clusters[j];
+                    float cluj_energy = cluj->energy();
+                    float cluj_x = cluj->x();
+                    float cluj_y = cluj->y();
+                    StThreeVectorD clujPos = mFcsDb->getStarXYZfromColumnRow(det, cluj_x, cluj_y);
+
+                    h1_two_cluster_energy_nocut->Fill(clu_energy + cluj_energy);
+                    float zgg = (abs(clu_energy - cluj_energy)) / (clu_energy + cluj_energy);
+                    h1_Zgg_nocut_cluster->Fill(zgg);
+                    StThreeVectorD xyzj = mFcsDb->getStarXYZfromColumnRow(det, cluj->x(), cluj->y());
+                    StLorentzVectorD pj = mFcsDb->getLorentzVector((xyzj), cluj->energy(), 0);
+                    h1_inv_mass_cluster_nocut->Fill((p + pj).m());
+                  }
               }
-            h2_cluster_position->Fill(cluPos.x(), cluPos.y());
-            h1_each_cluster_energy->Fill(clu_energy);
-            
-            if (i == nc - 1) 
-              continue;
-            for (int j = i + 1; j < nc; j++) 
-              {
-                StFcsCluster* cluj = clusters[j];
-                float cluj_energy = cluj->energy();
-                float cluj_x = cluj->x();
-                float cluj_y = cluj->y();
-                StThreeVectorD clujPos = mFcsDb->getStarXYZfromColumnRow(det, cluj_x, cluj_y);
+          //}
+      //if (mDebug > 0)
+        //LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
 
-                h1_two_cluster_energy_nocut->Fill(clu_energy + cluj_energy);
-                float zgg = (abs(clu_energy - cluj_energy)) / (clu_energy + cluj_energy);
-                h1_Zgg_nocut_cluster->Fill(zgg);
-                StThreeVectorD xyzj = mFcsDb->getStarXYZfromColumnRow(det, cluj->x(), cluj->y());
-                StLorentzVectorD pj = mFcsDb->getLorentzVector((xyzj), cluj->energy(), 0);
-                h1_inv_mass_cluster_nocut->Fill((p + pj).m());
-              }
-          }
-        if (mDebug > 0)
-          LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
+    }
 
-      }
-  
-    //histogram[0] -> Fill( muEvent -> primaryVertexPosition().z() ) ;
-    //histogram[1] -> Fill( muEvent -> primaryVertexPosition().x() );
-    //histogram -> Fill( muEvent -> eventInfo().time());
-    //histogram -> SetAxisRange(start_time - 10, muEvent -> eventInfo().time() + 10 ,"X");
-   //histogram[1] -> Fill( muEvent -> refMult() );
-   // cout << typeid( muEvent -> primaryVertexPosition().z()).name() << endl;
+  //histogram[0] -> Fill( muEvent -> primaryVertexPosition().z() ) ;
+  //histogram[1] -> Fill( muEvent -> primaryVertexPosition().x() );
+  //histogram -> Fill( muEvent -> eventInfo().time());
+  //histogram -> SetAxisRange(start_time - 10, muEvent -> eventInfo().time() + 10 ,"X");
+  //histogram[1] -> Fill( muEvent -> refMult() );
+  // cout << typeid( muEvent -> primaryVertexPosition().z()).name() << endl;
 
-   //components for st spin db maker
+  //components for st spin db maker
 
    return kStOK ;
   }
@@ -494,6 +544,7 @@ Int_t StKumMaker::Finish( )
   h1_each_cluster_energy->Write();
   h1_Zgg_nocut_cluster->Write();
   h1_inv_mass_cluster_nocut->Write();
+  h1_fwd_track_pt->Write();
 
   h2_cluster_position->Write();
   mHistogramOutput->Write() ;   // Write all histograms to disk
