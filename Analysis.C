@@ -1,4 +1,3 @@
-//cout << "ok" <<endl;
 #include <iostream>
 
 using namespace std;
@@ -10,44 +9,73 @@ const string magenta("\033[0;35m");
 const string reset("\033[0m");
     
 
-void Analysis(Int_t nFiles = 1,
-                TString InputFileList = "test_prod.list",
-                Int_t nevents=10, 
+void Analysis(	Int_t nFiles = 1,
+                TString InputFileList = "/star/u/bmagh001/MuDst/input/input.list",
+                Int_t nEvents=1, 
                 Int_t pedLedPhy=2, 
                 Int_t eventDisplay=1, 
                 int readMuDst=1,
                 Int_t debug=0)
-{
+	{
   
-    //TString opt = "in MakeEvent evout tpcDb trgd fcsDat fcsWFF fcsCluster fcsPoint";
 
 // Load libraries
 
-gROOT->Macro("Load.C");
+//gROOT->Macro("Load.C");
 gROOT->Macro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
 
-//gSystem->Load( "libStarRoot.so" );
+gSystem->Load( "libStarRoot.so" );
 
-gROOT->SetMacroPath(".:./StRoot/macros:
-                    ./StRoot/macros/graphics:
-                    ./StRoot/macros/analysis:
-                    ./StRoot/macros/test:
-                    ./StRoot/macros/examples:
-                    ./StRoot/macros/html:
-                    ./StRoot/macros/qa:
-                    ./StRoot/macros/calib:
-                    ./StRoot/macros/mudst:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/graphics:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/analysis:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/test:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/examples:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/html:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/qa:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/calib:
-                    /afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/mudst:
-                    /afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/macros:
-                    /afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/tutorials");
+if (gClassTable->GetID("TTable") < 0) {
+		gSystem->Load("libStar");
+		gSystem->Load("libPhysics");
+	}  
+	//gSystem->Load("libStarClassLibrary.so");
+	gSystem->Load("libStarRoot.so");
+	gROOT->LoadMacro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
+	loadSharedLibraries();
+	
+	gSystem->Load("StarMagField");
+	gSystem->Load("StMagF");
+	gSystem->Load("StDetectorDbMaker");
+	gSystem->Load("StTpcDb");
+	gSystem->Load("StDaqLib");
+	gSystem->Load("StDbBroker");
+	gSystem->Load("StDbUtilities");
+	gSystem->Load("St_db_Maker");
+
+	gSystem->Load("StEvent");
+	gSystem->Load("StEventMaker");
+	//gSystem->Load("StarMagField");
+ 
+	gSystem->Load("libGeom");
+	gSystem->Load("St_g2t");
+	
+	// Added for Run16 And beyond
+	gSystem->Load("libGeom.so");
+	
+	gSystem->Load("St_base.so");
+	gSystem->Load("StUtilities.so");
+	gSystem->Load("libPhysics.so");
+	gSystem->Load("StarAgmlUtil.so");
+	gSystem->Load("StarAgmlLib.so");
+	gSystem->Load("libStarGeometry.so");
+	gSystem->Load("libGeometry.so");
+	
+	gSystem->Load("xgeometry");
+ 
+	gSystem->Load("St_geant_Maker");
+
+
+	// needed since I use the StMuTrack
+	//gSystem->Load("StarClassLibrary");
+	gSystem->Load("StStrangeMuDstMaker");
+	gSystem->Load("StMuDSTMaker");
+	gSystem->Load("StBTofCalibMaker");
+	gSystem->Load("StVpdCalibMaker");
+	gSystem->Load("StBTofMatchMaker");
+	gSystem->Load("StBTofUtil");	
+
 
 gSystem->Load("StEventMaker");
 gSystem->Load("St_db_Maker");
@@ -58,14 +86,17 @@ gSystem->Load("StFcsClusterMaker");
 gSystem->Load("libMinuit");
 gSystem->Load("StFcsPointMaker");
 gSystem->Load("StEpdUtil");
-gSystem->Load("StFcsEventDisplay");
-gSystem->Load("StFwdTrackMaker")  ;  
+//gSystem->Load("StFcsEventDisplay");
+//gSystem->Load("StFwdTrackMaker")  ;
+
+ 
 gSystem -> Load("StKumMaker.so") ;
 
-gMessMgr->SetLimit("I",0);
-gMessMgr->SetLimit("Q",0);
-gMessMgr->SetLimit("W",0);
- 
+
+//gMessMgr->SetLimit("I",0); //Turn off log info messages
+//gMessMgr->SetLimit("Q",0); //turn off log warn messages
+//gMessMgr->SetLimit("W",0);
+
 TString OutputFileName;
 
 cout << InputFileList.Data() << endl;
@@ -74,9 +105,10 @@ cout << OutputFileName << endl;
 //char edout[200];
 StChain* chain = new StChain();
  
-StMuDstMaker* muDstMaker = new StMuDstMaker(0,0,"",InputFileList,"MuDst",nFiles);
+StMuDstMaker* muDstMaker = new StMuDstMaker(0,0,"",InputFileList.Data(),"MuDst.root",nFiles);
 //components for spin db maker
 St_db_Maker *dbMk = new St_db_Maker("db","MySQL:StarDb","$STAR/StarDb");
+
 if(dbMk){
 	dbMk->SetAttr("blacklist", "tpc");
 	dbMk->SetAttr("blacklist", "svt");
@@ -105,13 +137,13 @@ StFcsRawHitMaker* hitmk = new StFcsRawHitMaker();
     hitmk->setReadMuDst(readMuDst);
 StFcsWaveformFitMaker *wff= new StFcsWaveformFitMaker();
     wff->setEnergySelect(13,13,1);
-StFwdTrackMaker* track = new StFwdTrackMaker();
+//StFwdTrackMaker* track = new StFwdTrackMaker();
     //wff->SetDebug(debug);
     
 StFcsClusterMaker *clu= new StFcsClusterMaker;
     //clu->setDebug(1);
 
-//StFcsPointMaker *poi=(StFcsPointMaker *)chain->GetMaker("StFcsPointMaker");
+StFcsPointMaker *poi=(StFcsPointMaker *)chain->GetMaker("StFcsPointMaker");
     //poi->setDebug(1);
     //poi->setShowerShape(3); 
 //gSystem->Load("StVpdCalibMaker");
@@ -137,7 +169,8 @@ StFcsEventDisplay* fcsed;
     */    
 
 StKumMaker* Hello = new StKumMaker();
-Int_t nEvents = 5;
+chain->AddMaker(Hello);
+//Int_t nEvents = 5;
 // Loop over the links in the chain
 cout << "\033[1;31m" << "Chain initiating, please wait" << "\033[0m\n" << endl;
 chain -> Init();
