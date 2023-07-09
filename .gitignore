@@ -1,5 +1,5 @@
 .ipynb_checkpoints
-.sl73_gcc485
+.sl73_gcc485/
 .vscode
 .directory
 polarization.C
@@ -7,7 +7,11 @@ daq
 daq.root
 fwdTrackerOutput.root
 fwdtree.root
-.sl73_x8664_gcc485
 check
 input/
-
+HelloWorldExample/
+temp_gccflags.c
+spins/
+Run_17_polarization.txt
+StRoot/
+.sl73_x8664_gcc485/
