@@ -1,1 +1,0 @@
-../../../../../StRoot/StFwd/StEvent/StTpcPadrowHitCollection.h

@@ -1,1 +1,0 @@
-../../../../../StRoot/StFwd/StEvent/StETofCollection.h

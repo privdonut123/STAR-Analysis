@@ -1,1 +1,0 @@
-../../../../StRoot/StFwdTrackMaker/FwdTrackerConfig.cxx

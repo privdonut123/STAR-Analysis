@@ -1,1 +1,0 @@
-../../../../StRoot/StEvent/StV0Vertex.cxx

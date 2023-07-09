@@ -1,1 +1,0 @@
-../../../../StRoot/StEvent/StTriggerData2017.h
