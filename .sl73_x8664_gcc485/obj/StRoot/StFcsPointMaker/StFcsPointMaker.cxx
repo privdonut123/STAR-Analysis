@@ -1,1 +1,0 @@
-../../../../StRoot/StFcsPointMaker/StFcsPointMaker.cxx

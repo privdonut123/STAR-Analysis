@@ -1,1 +1,0 @@
-../../../../../StRoot/StFwd/StEvent/StFstSensorHitCollection.h

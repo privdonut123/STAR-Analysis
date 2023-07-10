@@ -1,1 +1,0 @@
-../../../../StRoot/StEvent/StEmcPoint.h

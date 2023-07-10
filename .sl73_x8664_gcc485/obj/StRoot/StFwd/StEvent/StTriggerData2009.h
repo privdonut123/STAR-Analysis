@@ -1,1 +1,0 @@
-../../../../../StRoot/StFwd/StEvent/StTriggerData2009.h

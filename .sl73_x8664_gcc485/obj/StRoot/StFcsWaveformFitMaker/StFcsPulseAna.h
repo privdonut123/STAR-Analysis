@@ -1,1 +1,0 @@
-../../../../StRoot/StFcsWaveformFitMaker/StFcsPulseAna.h
