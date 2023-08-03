@@ -1,6 +1,4 @@
-.ipynb_checkpoints
-.sl73_gcc485/
-.vscode
+.vscode/
 .directory
 polarization.C
 daq
@@ -13,5 +11,9 @@ HelloWorldExample/
 temp_gccflags.c
 spins/
 Run_17_polarization.txt
-StRoot/
+#StRoot/
 .sl73_x8664_gcc485/
+.ipynb_checkpoints/
+Analysis.C
+output.root
+README.md
