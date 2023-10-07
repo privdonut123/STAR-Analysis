@@ -1,1 +1,0 @@
-../../../../../StRoot/StMuDSTMaker/COMMON/StMuEmcHit.h

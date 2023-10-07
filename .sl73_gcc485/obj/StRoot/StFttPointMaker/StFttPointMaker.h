@@ -1,1 +1,0 @@
-../../../../StRoot/StFttPointMaker/StFttPointMaker.h

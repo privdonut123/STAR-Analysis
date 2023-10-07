@@ -1,1 +1,0 @@
-../../../../../StRoot/StMuDSTMaker/COMMON/StMuFcsPoint.cxx
