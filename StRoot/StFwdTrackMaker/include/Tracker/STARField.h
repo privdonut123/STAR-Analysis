@@ -29,7 +29,7 @@ class StarFieldAdaptor : public genfit::AbsBField {
             float z = x[2];
             float r = sqrt(pow(x[0],2) + pow(x[1],2));
             if( fabs(z) < 250. && r < 50.)  { 
-                B[0] = 0.; B[1] = 0.; B[2] = 4.97979927; 
+                B[0] = 0.; B[1] = 0.; B[2] = -20; //-4.97979927; 
             } else if ( fabs(z) > 450 ) {
                 B[0] = 0.; B[1] = 0.; B[2] = 0.; 
             } else {

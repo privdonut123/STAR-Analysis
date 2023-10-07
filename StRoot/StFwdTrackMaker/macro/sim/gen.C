@@ -17,8 +17,8 @@ StarKinematics *kinematics = 0;
 
 
 TH1F* hNumHits = 0;
-TString nameParticle = "mu+";
-float numParticles = 10;
+TString nameParticle = "J/psi";
+float numParticles = 1;
 
 // ----------------------------------------------------------------------------
 void geometry( TString tag, Bool_t agml=true )
@@ -44,7 +44,9 @@ void trig( Int_t n=1 )
     // Clear the chain from the previous event
     chain->Clear();
 
-    kinematics->Kine( numParticles, nameParticle.Data(), 4.2, 5.0, 2.0, 4.50  );
+    kinematics->Kine( numParticles, nameParticle.Data(), 0.1, 0.2, 2.5, 6.50  );
+    // kinematics->Kine( numParticles, "J/psi", 0.1,0.3, 5,10);
+    // kinematics->Kine( numParticles, nameParticle.Data(), 4.2, 5.0, 2.5, 3.50  );
 		// kinematics->Kine( numParticles, nameParticle.Data(), 10.2, 12.0, 2.5, 4.00  );
 
     // Generate the event

@@ -5,7 +5,7 @@
     <Source ftt="GEANT" fttFilter="true" />
     <SiRasterizer r="3.0" phi="0.04" active="true" />
     
-    <TrackFinder nIterations="1" source="fst">
+    <TrackFinder nIterations="1" source="ftt">
         <Iteration nPhiSlices="1"> <!-- Options for first iteration -->
             <SegmentBuilder>
                 <!-- <Criteria name="Crit2_RZRatio" min="0.0" max="10.0" /> -->

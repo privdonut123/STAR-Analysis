@@ -1,0 +1,1 @@
+../../../../../StRoot/StMuDSTMaker/COMMON/StMuRpsCollection.cxx

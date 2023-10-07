@@ -76,6 +76,8 @@ int StFwdAnalysisMaker::Finish() {
     // restore previous directory
     gDirectory = prevDir;
 
+    LOG_INFO << "Writing FwdAna output" << endm;
+
     return kStOk; 
 }
 //________________________________________________________________________
@@ -89,11 +91,19 @@ int StFwdAnalysisMaker::Init() {
     mHists["nHitsFit"] = new TH1F("nHitsFit", ";nHitsFit; counts", 10, 0, 10);
     mHists["fwdMultEcalMatch"] = new TH1F("fwdMultEcalMatch", ";N_{ch}^{FWD}; counts", 100, 0, 100);
     mHists["fwdMultHcalMatch"] = new TH1F("fwdMultHcalMatch", ";N_{ch}^{FWD}; counts", 100, 0, 100);
+
+    mHists["fwdMultEcalClusters"] = new TH1F("fwdMultEcalClusters", ";N_{Clu}^{ECAL}; counts", 100, 0, 100);
+    mHists["fwdMultHcalClusters"] = new TH1F("fwdMultHcalClusters", ";N_{Clu}^{HCAL}; counts", 100, 0, 100);
+
     mHists["eta"] = new TH1F("eta", ";#eta; counts", 100, 0, 5);
     mHists["phi"] = new TH1F("phi", ";#phi; counts", 100, -3.1415926, 3.1415926);
+    mHists["pt"] = new TH1F("pt", "; pT; counts", 500, 0, 10);
 
     mHists["ecalMatchPerTrack"] = new TH1F("ecalMatchPerTrack", ";N_{match} / track; counts", 5, 0, 5);
     mHists["hcalMatchPerTrack"] = new TH1F("hcalMatchPerTrack", ";N_{match} / track; counts", 5, 0, 5);
+
+    mHists["matchedEcalEnergy"] = new TH1F("matchedEcalEnergy", ";Energy; counts", 100, 0, 15);
+    mHists["matchedHcalEnergy"] = new TH1F("matchedHcalEnergy", ";Energy; counts", 100, 0, 15);
 
     mHists["ecalEnergy"] = new TH1F("ecalEnergy", ";Energy; counts", 100, 0, 15);
     mHists["hcalEnergy"] = new TH1F("hcalEnergy", ";Energy; counts", 100, 0, 15);
@@ -170,7 +180,30 @@ void StFwdAnalysisMaker::ProcessFwdTracks(  ){
     size_t fwdMultHcalMatch = 0;
     size_t fwdMultFST = 0;
 
+    LOG_INFO << "FwdTrackCollection has: " << ftc->tracks().size() << " tracks" << endm;
+
     mHists[ "fwdMultAll" ]->Fill( ftc->tracks().size() );
+
+    // Cluster info (independen t of tracks)
+    size_t fwdMultEcalClusters = 0;
+    size_t fwdMultHcalClusters = 0;
+    for ( int iDet = 0; iDet < 4; iDet++ ){
+        for( int i = 0; i < fcs->clusters(iDet).size(); i++){
+            StFcsCluster * clu = fcs->clusters(iDet)[i];
+
+            if ( iDet < 2 ){
+                fwdMultEcalClusters++;
+                mHists[ "ecalEnergy" ]->Fill( clu->energy() );
+            } else if ( iDet < 4 ){
+                fwdMultHcalClusters++;
+                mHists[ "hcalEnergy" ]->Fill( clu->energy() );
+            }
+        }
+    }
+
+    mHists[ "fwdMultEcalClusters" ]->Fill( fwdMultEcalClusters );
+    mHists[ "fwdMultHcalClusters" ]->Fill( fwdMultHcalClusters );
+
 
     size_t nGood = 0;
     size_t nFailed = 0;
@@ -196,6 +229,7 @@ void StFwdAnalysisMaker::ProcessFwdTracks(  ){
 
         mHists["eta"]->Fill( fwdTrack->momentum().pseudoRapidity() );
         mHists["phi"]->Fill( fwdTrack->momentum().phi() );
+        mHists["pt"]->Fill( fwdTrack->momentum().perp() );
     
         // ecal proj
         float c[9];
@@ -211,7 +245,7 @@ void StFwdAnalysisMaker::ProcessFwdTracks(  ){
         for ( int iEcal = 0; iEcal < fwdTrack->ecalClusters().size(); iEcal++ ){
             StFcsCluster *clu = fwdTrack->ecalClusters()[iEcal];
             LOG_INFO << "Ecal clu detId = " << clu->detectorId() << endm;
-            mHists["ecalEnergy"]->Fill( clu->energy() );
+            mHists["matchedEcalEnergy"]->Fill( clu->energy() );
 
             StThreeVectorD xyz = mFcsDb->getStarXYZfromColumnRow(clu->detectorId(), clu->x(), clu->y());
             float dx = ecalProj.mXYZ.x() - xyz.x();
@@ -309,6 +343,8 @@ void StFwdAnalysisMaker::ProcessFwdTracks(  ){
     mHists["fwdMultFST"]->Fill( fwdMultFST );
     mHists["fwdMultHcalMatch"]->Fill( fwdMultHcalMatch );
     mHists["fwdMultEcalMatch"]->Fill( fwdMultEcalMatch );
+
+    LOG_INFO << "Found " << nFailed << " failed track fits out of " << ftc->tracks().size()  << endm;
 } // ProcessFwdTracks
 
 //________________________________________________________________________

@@ -89,7 +89,7 @@ void fwd_tracking(      int n = 500,
         fwdTrack->SetConfigFile( configFile );
         fwdTrack->SetGenerateTree( true );
         fwdTrack->SetGenerateHistograms( true );
-        fwdTrack->SetVisualize(true);
+        fwdTrack->SetVisualize(false);
         fwdTrack->SetDebug();
 
         gSystem->Load("StFwdUtils.so");
@@ -103,14 +103,14 @@ void fwd_tracking(      int n = 500,
         // FwdTrack and FcsCluster assciation
         gSystem->Load("StFcsTrackMatchMaker");
         StFcsTrackMatchMaker *match = new StFcsTrackMatchMaker();
-        match->setMaxDistance(6,10);
+        match->setMaxDistance(20,20);
         match->setFileName("fcstrk.root");
         match->SetDebug();
         chain->AddMaker(match);
 
-        StFwdAnalysisMaker *fwdAna = new StFwdAnalysisMaker();
-        fwdAna->SetDebug();
-        chain->AddAfter("FcsTrkMatch", fwdAna);
+        // StFwdAnalysisMaker *fwdAna = new StFwdAnalysisMaker();
+        // fwdAna->SetDebug();
+        // chain->AddAfter("FcsTrkMatch", fwdAna);
     }
 
     StMuDstMaker * muDstMaker = (StMuDstMaker*)chain->GetMaker( "MuDst" );

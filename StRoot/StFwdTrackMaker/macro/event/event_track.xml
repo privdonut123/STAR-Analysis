@@ -35,7 +35,7 @@
         <HitRemover active="false" />
     </TrackFinder>
     
-	<TrackFitter off="false" refitSi="true" mcSeed="false" zeroB="true"  >
+	<TrackFitter off="false" refitSi="true" mcSeed="false" zeroB="false"  >
         <Vertex sigmaXY="0.1" sigmaZ="50.0" includeInFit="true" smearMcVertex="false" />
     </TrackFitter>
 </config>

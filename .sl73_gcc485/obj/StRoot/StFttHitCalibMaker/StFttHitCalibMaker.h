@@ -1,0 +1,1 @@
+../../../../StRoot/StFttHitCalibMaker/StFttHitCalibMaker.h

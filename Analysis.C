@@ -10,8 +10,8 @@ const string reset("\033[0m");
     
 
 void Analysis(	Int_t nFiles = 1,
-                TString InputFileList = "/star/u/bmagh001/MuDst/input/input.list",
-                Int_t nEvents=1, 
+                TString InputFileList = "/star/u/bmagh001/temp/checkpoint-07-06-2023/st_fwd_23074018_raw_1000002.MuDst.root",
+                Int_t nEvents=10, 
                 Int_t pedLedPhy=2, 
                 Int_t eventDisplay=1, 
                 int readMuDst=1,
@@ -21,64 +21,56 @@ void Analysis(	Int_t nFiles = 1,
 
 // Load libraries
 
-//gROOT->Macro("Load.C");
-gROOT->Macro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
-
 gSystem->Load( "libStarRoot.so" );
 
 if (gClassTable->GetID("TTable") < 0) {
 		gSystem->Load("libStar");
 		gSystem->Load("libPhysics");
 	}  
-	//gSystem->Load("libStarClassLibrary.so");
-	gSystem->Load("libStarRoot.so");
-	gROOT->LoadMacro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
-	loadSharedLibraries();
-	
-	gSystem->Load("StarMagField");
-	gSystem->Load("StMagF");
-	gSystem->Load("StDetectorDbMaker");
-	gSystem->Load("StTpcDb");
-	gSystem->Load("StDaqLib");
-	gSystem->Load("StDbBroker");
-	gSystem->Load("StDbUtilities");
-	gSystem->Load("St_db_Maker");
+gSystem->Load("libStarRoot.so");
 
-	gSystem->Load("StEvent");
-	gSystem->Load("StEventMaker");
-	//gSystem->Load("StarMagField");
- 
-	gSystem->Load("libGeom");
-	gSystem->Load("St_g2t");
-	
-	// Added for Run16 And beyond
-	gSystem->Load("libGeom.so");
-	
-	gSystem->Load("St_base.so");
-	gSystem->Load("StUtilities.so");
-	gSystem->Load("libPhysics.so");
-	gSystem->Load("StarAgmlUtil.so");
-	gSystem->Load("StarAgmlLib.so");
-	gSystem->Load("libStarGeometry.so");
-	gSystem->Load("libGeometry.so");
-	
-	gSystem->Load("xgeometry");
- 
-	gSystem->Load("St_geant_Maker");
+gROOT->LoadMacro("$STAR/StRoot/StMuDSTMaker/COMMON/macros/loadSharedLibraries.C");
+loadSharedLibraries();
 
-
-	// needed since I use the StMuTrack
-	//gSystem->Load("StarClassLibrary");
-	gSystem->Load("StStrangeMuDstMaker");
-	gSystem->Load("StMuDSTMaker");
-	gSystem->Load("StBTofCalibMaker");
-	gSystem->Load("StVpdCalibMaker");
-	gSystem->Load("StBTofMatchMaker");
-	gSystem->Load("StBTofUtil");	
-
-
-gSystem->Load("StEventMaker");
+gSystem->Load("StMagF");
+gSystem->Load("StDetectorDbMaker");
+gSystem->Load("StTpcDb");
+gSystem->Load("StDaqLib");
+gSystem->Load("StDbBroker");
+gSystem->Load("StDbUtilities");
 gSystem->Load("St_db_Maker");
+
+gSystem->Load("StEvent");
+gSystem->Load("StEventMaker");
+
+gSystem->Load("libGeom");
+gSystem->Load("St_g2t");
+
+// Added for Run16 And beyond
+gSystem->Load("libGeom.so");
+
+gSystem->Load("St_base.so");
+gSystem->Load("StUtilities.so");
+gSystem->Load("libPhysics.so");
+gSystem->Load("StarAgmlUtil.so");
+gSystem->Load("StarAgmlLib.so");
+gSystem->Load("libStarGeometry.so");
+gSystem->Load("libGeometry.so");
+
+gSystem->Load("xgeometry");
+
+gSystem->Load("St_geant_Maker");
+
+
+// needed since I use the StMuTrack
+//gSystem->Load("StarClassLibrary");
+gSystem->Load("StStrangeMuDstMaker");
+gSystem->Load("StMuDSTMaker");
+gSystem->Load("StBTofCalibMaker");
+gSystem->Load("StVpdCalibMaker");
+gSystem->Load("StBTofMatchMaker");
+gSystem->Load("StBTofUtil");	
+
 gSystem->Load("StFcsDbMaker");
 gSystem->Load("StFcsRawHitMaker");
 gSystem->Load("StFcsWaveformFitMaker");
@@ -87,7 +79,50 @@ gSystem->Load("libMinuit");
 gSystem->Load("StFcsPointMaker");
 gSystem->Load("StEpdUtil");
 //gSystem->Load("StFcsEventDisplay");
-//gSystem->Load("StFwdTrackMaker")  ;
+
+// Getting libraries for forward tracking
+gSystem->Load("libStarAgmlUtil.so");
+gSystem->Load("libStarAgmlLib.so");
+gSystem->Load("libGeometry.so");
+gSystem->Load("libStarGeometry.so");
+gSystem->Load("libVMC.so");
+gSystem->Load("libxgeometry.so");
+gSystem->Load("libStBTofUtil.so");
+gSystem->Load("libStFstUtil.so");
+gSystem->Load("libTree.so");
+gSystem->Load("libStDbBroker.so");
+gSystem->Load("libSt_db_Maker.so");
+gSystem->Load("libStMagF.so");
+gSystem->Load("libStDetectorDbMaker.so");
+gSystem->Load("libStDbUtilities.so");
+gSystem->Load("libStFcsDbMaker.so");
+gSystem->Load("libStFttDbMaker.so");
+gSystem->Load("libStFstDbMaker.so");
+gSystem->Load("libStEventMaker.so");
+gSystem->Load("libStFstRawHitMaker.so");
+gSystem->Load("libStFstClusterMaker.so");
+gSystem->Load("libStFstHitMaker.so");
+gSystem->Load("libStFcsRawHitMaker.so");
+gSystem->Load("libStFcsWaveformFitMaker.so");
+gSystem->Load("libStFcsClusterMaker.so");
+gSystem->Load("libStFcsPointMaker.so");
+gSystem->Load("libMinuit.so");
+gSystem->Load("libStFttRawHitMaker.so");
+gSystem->Load("libStFttHitCalibMaker.so");
+gSystem->Load("libStFttClusterMaker.so");
+gSystem->Load("libStFttPointMaker.so");
+gSystem->Load("libStFttQAMaker.so");
+
+gSystem->Load("libXMLIO.so");
+gSystem->Load("libgenfit2.so");
+gSystem->Load("libKiTrack.so");
+gSystem->Load("libStarGeneratorUtil.so");
+gSystem->Load("libMathMore.so");
+gSystem->Load("libStEpdUtil.so");
+gSystem->Load("libStFwdTrackMaker.so");
+// make five lines that have gSystem->Load("")
+
+gSystem->Load("StFwdTrackMaker")  ;
 
  
 gSystem -> Load("StKumMaker.so") ;
@@ -104,8 +139,8 @@ cout << InputFileList.Data() << endl;
 cout << OutputFileName << endl;
 //char edout[200];
 StChain* chain = new StChain();
- 
 StMuDstMaker* muDstMaker = new StMuDstMaker(0,0,"",InputFileList.Data(),"MuDst.root",nFiles);
+
 //components for spin db maker
 St_db_Maker *dbMk = new St_db_Maker("db","MySQL:StarDb","$STAR/StarDb");
 
@@ -126,6 +161,7 @@ if(dbMk){
 	dbMk->SetAttr("blacklist", "rhicf");
     }
 //StSpinDbMaker* spindb = new StSpinDbMaker("spinDb");
+
 StFcsDbMaker *fcsDbMkr= new StFcsDbMaker();
 StFcsDb* fcsDb = (StFcsDb*) chain->GetDataSet("fcsDb");
     //fcsDb->setDbAccess(0);
@@ -144,11 +180,6 @@ StFcsClusterMaker *clu= new StFcsClusterMaker;
     //clu->setDebug(1);
 
 StFcsPointMaker *poi=(StFcsPointMaker *)chain->GetMaker("StFcsPointMaker");
-    //poi->setDebug(1);
-    //poi->setShowerShape(3); 
-//gSystem->Load("StVpdCalibMaker");
-   //StVpdCalibMaker *vpdCalib = new StVpdCalibMaker();
-// List of member links in the chain
 
 //StFcsEventDisplay* fcsed = new StFcsEventDisplay();
 /*
@@ -163,26 +194,23 @@ StFcsEventDisplay* fcsed;
 	    fcsed->setFilter(1);
     }
     */
-/*gSystem->Load("StFcsQaMaker");
-    StFcsQaMaker *qaMkr=new StFcsQaMaker("FcsQa");  
-    qaMkr->setRun(run);
-    */    
+
+cout << red << "InputFileList.Data(): " << reset << InputFileList << endl;
 
 StKumMaker* Hello = new StKumMaker();
 chain->AddMaker(Hello);
-//Int_t nEvents = 5;
-// Loop over the links in the chain
-cout << "\033[1;31m" << "Chain initiating, please wait" << "\033[0m\n" << endl;
+cout << green << "StKumMaker added to the chain" << reset << endl;
+cout << green << "Chain initiating, please wait" << reset << endl;
 chain -> Init();
+cout << green << "Chain initiated" << reset << endl;
 //chain-> InitRun();
 
 cout <<  chain -> GetNTotal() << endl ;
-chain -> EventLoop(0,nEvents);
-cout << "\033[1;31m" << "Chain finishing, please wait" << "\033[0m\n" << endl;
+chain -> EventLoop(nEvents);
+cout << green << "Chain finishing, please wait" << reset << endl;
 chain -> Finish();
 // Cleanup
-cout << "Deleting chain" << endl;
-delete chain ;
-//exit();
+cout << green << "Deleting chain"  << reset << endl;
+delete chain;
 
 }

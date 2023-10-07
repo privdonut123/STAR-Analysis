@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StTriggerData2012.cxx

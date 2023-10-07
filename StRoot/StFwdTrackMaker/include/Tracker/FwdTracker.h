@@ -597,7 +597,7 @@ class ForwardTrackMaker {
 
         /***********************************************/
         // REFIT with Silicon hits (only makes sense for ftt seed tracking)
-        if (mConfig.get<bool>("TrackFitter:refitSi", true)) {
+        if (mConfig.get<bool>("TrackFitter:refitSi", false)) {
             addSiHits();
         } else {
             // Skipping Si Refit
@@ -606,7 +606,7 @@ class ForwardTrackMaker {
 
         /***********************************************/
         // REFIT with sTGC hits (only makes sense for fst seed tracking)
-        if (mConfig.get<bool>("TrackFitter:refitFtt", true)) {
+        if (mConfig.get<bool>("TrackFitter:refitFtt", false)) {
             LOG_INFO << "Refitting, searching for Ftt points in line with the track" << endm;
             addFttHits();
         }

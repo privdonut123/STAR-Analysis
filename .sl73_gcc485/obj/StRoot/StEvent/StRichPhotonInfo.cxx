@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StRichPhotonInfo.cxx

@@ -1,0 +1,1 @@
+../../../../StRoot/StFttQAMaker/Parameters.h

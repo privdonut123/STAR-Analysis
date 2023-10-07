@@ -16,7 +16,15 @@
 #include "StEvent/StTriggerId.h"
 #include "StMuDSTMaker/COMMON/StMuTriggerIdCollection.h"
 #include "StFcsDbMaker/StFcsDb.h"
- 
+
+/*
+const std::string red("\033[0;31m");
+const std::string green("\033[1;32m");
+//const std::string yellow("\033[1;33m");
+const std::string cyan("\033[0;36m");
+const std::string magenta("\033[0;35m");
+const std::string reset("\033[0m");
+*/
 
 class StMuDstMaker ;
 class StMuEvent    ;
@@ -98,6 +106,40 @@ class StKumMaker : public StMaker
       StMuFwdTrackCollection* mFwdColl = 0;
       StFwdTrackCollection* fwdColl = 0;
     protected: 
+      
+      void purple() 
+        {
+          printf("\033[0;35m");
+        }
+      void red() 
+        {
+          printf("\033[0;31m");
+        }
+      void green() 
+        {
+          printf("\033[1;32m");
+        }
+      void cyan() 
+        {
+          printf("\033[0;36m");
+        }
+      void magenta() 
+        {
+          printf("\033[0;35m");
+        }
+      void bold() 
+        {
+          printf("\033[1m");
+        }
+      void underline() 
+        {
+          printf("\033[4m");
+        }
+      void reset() 
+        {
+          printf("\033[0m");
+        }
+
       //StSpinDbMaker *mStSpinDbMaker;
 
     public:

@@ -1,1 +1,3 @@
- get_file_list.pl -limit 2 -keys 'path,filename' -cond 'production=P21ic,filetype=daq_reco_MuDst,storage!=hpss,tpc=1,emc=1,sanity=1' -distinct -delim '/' -o input.list
+1. run "source check/env.sh"
+2. run "cons"
+3. run "root4star -l -q Analysis.C"

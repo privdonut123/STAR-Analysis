@@ -1,0 +1,1 @@
+../../../../StRoot/StEvent/StRichPixel.h
