@@ -1,10 +1,16 @@
-#include <iostream>
-#include <include/termcolor.hpp>
-
+//#include <iostream>
+//#include "/direct/star+u/bmagh001/MuDst/include/termcolor.hpp"
 using namespace std;
+const string red("\033[0;31m");
+const string green("\033[1;32m");
+const string yellow("\033[1;33m");
+const string cyan("\033[0;36m");
+const string magenta("\033[0;35m");
+const string reset("\033[0m");
+
     
 void hadron_Analysis(	Int_t nFiles = 1,
-                		TString InputFileList = "/star/u/bmagh001/temp/checkpoint-07-06-2023/st_fwd_23074018_raw_1000002.MuDst.root",
+                		TString InputFileList = "/direct/star+u/bmagh001/MuDst/input/st_fwd_23074018_raw_1000004.MuDst.root",
                 		Int_t nEvents=1000, 
                 		Int_t pedLedPhy=2, 
 						Int_t eventDisplay=1, 
@@ -12,7 +18,7 @@ void hadron_Analysis(	Int_t nFiles = 1,
 						Int_t debug=0	)
 	{
   
-
+//gROOT->ProcessLine("#include \"include/termcolor.hpp\"" );
 // Load libraries
 
 gSystem->Load( "libStarRoot.so" );
@@ -57,7 +63,7 @@ gSystem->Load("St_geant_Maker");
 
 
 // needed since I use the StMuTrack
-//gSystem->Load("StarClassLibrary");
+gSystem->Load("StarClassLibrary");
 gSystem->Load("StStrangeMuDstMaker");
 gSystem->Load("StMuDSTMaker");
 gSystem->Load("StBTofCalibMaker");
@@ -166,7 +172,7 @@ StFcsRawHitMaker* hitmk = new StFcsRawHitMaker();
     //hitmk->setDebug(debug);
     hitmk->setReadMuDst(readMuDst);
 StFcsWaveformFitMaker *wff= new StFcsWaveformFitMaker();
-    wff->setEnergySelect(13,13,1);
+    wff->setEnergySelect(0);
 //StFwdTrackMaker* track = new StFwdTrackMaker();
     //wff->SetDebug(debug);
     
@@ -189,21 +195,23 @@ StFcsEventDisplay* fcsed;
     }
     */
 
-cout << termcolor::cyan << "InputFileList.Data(): " << InputFileList << termcolor::reset << endl;
+cout << cyan << "InputFileList.Data(): " << InputFileList << reset << endl;
 
 StHcalAnalysisMaker* Hello = new StHcalAnalysisMaker();
+TString out_file=Form("./output/output_hadron.root");
+Hello->set_outputfile(out_file.Data());
 chain->AddMaker(Hello);
-cout << termcolor::green << "StHcalAnalysisMaker added to the chain" << termcolor::reset << endl;
-cout << termcolor::green << "Chain initiating, please wait" << termcolor::reset << endl;
+cout << green << "StHcalAnalysisMaker added to the chain" << reset << endl;
+cout << green << "Chain initiating, please wait" << reset << endl;
 chain -> Init();
 //chain-> InitRun();
 
 cout <<  chain -> GetNTotal() << endl ;
 chain -> EventLoop(nEvents);
-cout << termcolor::green << "Chain finishing, please wait" << termcolor::reset << endl;
+cout << green << "Chain finishing, please wait" << reset << endl;
 chain -> Finish();
 // Cleanup
-cout << termcolor::green << "Deleting chain"  << termcolor::reset << endl;
+cout << green << "Deleting chain"  << reset << endl;
 delete chain;
 
 }
