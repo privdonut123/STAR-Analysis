@@ -7,11 +7,13 @@
 #include "TVector3.h"
 #include <TTree.h>
 // ROOT includes
+
 #include "TNtuple.h"
 #include "TTree.h"
 // STL includes
 #include <vector>
 #include <memory>
+#include <cmath>
 
 #include "StEvent/StTriggerId.h"
 #include "StMuDSTMaker/COMMON/StMuTriggerIdCollection.h"
@@ -56,16 +58,36 @@ class StHcalAnalysisMaker : public StMaker
       
       TH1F* h1_two_cluster_energy_nocut = 0;   //h1_two_point_energy_nocut:2 point energy(no cut)
       TH1F* h1_each_cluster_energy = 0;        //h1_each_cluster_energy:each cluster energy(no cut)
+      TH1F* h1_hcal_max_cluster_energy_per_event = 0;    //h1_hcal_max_cluster_energy:hcal max cluster energy(no cut)
       TH1F* h1_Zgg_nocut_cluster = 0;          //h1_Zgg_nocut_cluster:Zgg without cut
       TH1F* h1_inv_mass_cluster_nocut = 0;
+      TH1F* h1_ecal_clusters_per_event = 0;
+      TH1F* h1_hcal_clusters_per_event = 0;
+      TH1F* h1_hcal_neigbors_per_cluster = 0;
       TH1F* h1_fwd_track_pt = 0;
       TH1F* h1_track_charge = 0;
+      TH1F* h1_geant_shower_proj_z = 0;
+      TH1F* h1_geant_primary_eta = 0;
+      TH1F* h1_geant_primary_pt = 0;
+      TH1F* h1_geant_primary_pz = 0;
+      TH1F* h1_geant_parent_eta = 0;
+      TH1F* h1_geant_parent_pt = 0;
+      TH1F* h1_geant_parent_pz = 0;
 
-      TH2F* h2_cluster_position = 0;        //h2_cluster_position
+      TH2F* h2_geant_shower_proj_xy = 0;
+      TH2F* h2_ecal_cluster_position = 0;        
+      TH2F* h2_hcal_cluster_position = 0;  //h2_cluster_position_nocut
+      TH2F* h2_ecal_hcal_cluster_energy = 0;        //h2_ecal_hcal_cluster_energy
+      TH2F* h2_ecal_hcal_hit_energy = 0; 
 
       int bins = 150;
       float m_low = 0;
       float m_up = 0.4;
+      float total_event_energy = 0;
+      float total_ecal_cluster_energy = 0;
+      float total_hcal_cluster_energy = 0;
+      float total_ecal_hit_energy = 0;
+      float total_hcal_hit_energy = 0;
 
       TFile* mHistogramOutput;     //  Histograms outputfile pointer
       TFile* spins;
@@ -81,6 +103,9 @@ class StHcalAnalysisMaker : public StMaker
       StMuFwdTrackCollection* mFwdColl = 0;
       StFwdTrackCollection* fwdColl = 0;
 
+      bool ecal_dead_zone = false;
+      bool hcal_dead_zone = false;
+
     protected: 
       
     public:
@@ -92,8 +117,13 @@ class StHcalAnalysisMaker : public StMaker
       Int_t Make    ( ) ;                               //  The main analysis that is done on each event
       Int_t Finish  ( ) ;                               //  Finish the analysis, close files, and clean up.
 
-      int mDebug = 0;
+      int mDebug = 1;
       float E_min = 1;
+
+      void set_outputfile(const char* name)
+        {
+          mHistogramOutputFileName = name;
+        }
       ClassDef(StHcalAnalysisMaker,1)                     //  Macro for CINT compatability
   };
 
