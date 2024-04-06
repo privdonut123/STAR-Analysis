@@ -10,8 +10,8 @@ const string reset("\033[0m");
 
     
 void hadron_Analysis(	Int_t nFiles = 1,
-                		TString InputFileList = "/direct/star+u/bmagh001/MuDst/input/st_fwd_23074018_raw_1000004.MuDst.root",
-                		Int_t nEvents=1000, 
+                		TString InputFileList = "/direct/star+u/bmagh001/MuDst/input/st_fwd_22356022_raw_2500032.MuDst.root",
+                		Int_t nEvents=100, 
                 		Int_t pedLedPhy=2, 
 						Int_t eventDisplay=1, 
 						int readMuDst=1,
@@ -124,13 +124,49 @@ gSystem->Load("libStFwdTrackMaker.so");
 
 gSystem->Load("StFwdTrackMaker")  ;
 
- 
+//gSystem->Load("StFcsRawHitMaker.so");
+//gSystem->Load("StFcsPointMaker.so");
+
+// TString _chain = Form("fzin %s sdt20211016 fstFastSim fcsSim fcsWFF fcsCluster fwdTrack MakeEvent MuDST db StEvent ReverseField bigbig evout cmudst tree", "y2023 agml usexgeom");
+
+// gROOT->SetMacroPath(".:/star-sw/StRoot/macros:./StRoot/macros:./StRoot/macros/graphics:./StRoot/macros/analysis:./StRoot/macros/test:./StRoot/macros/examples:./StRoot/macros/html:./StRoot/macros/qa:./StRoot/macros/calib:./StRoot/macros/mudst:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/graphics:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/analysis:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/test:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/examples:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/html:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/qa:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/calib:/afs/rhic.bnl.gov/star/packages/DEV/StRoot/macros/mudst:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/macros:/afs/rhic.bnl.gov/star/ROOT/36/5.34.38/.sl73_x8664_gcc485/rootdeb/tutorials");
+
+// gROOT->LoadMacro("bfc.C");
+// bfc(-1, _chain, InputFileList);
+// StMuDstMaker* muDstMaker = (StMuDstMaker*) chain->GetMaker("MuDst");
+// St_db_Maker *dbMk = new St_db_Maker("db","MySQL:StarDb","$STAR/StarDb");
+// 	if(dbMk){
+// 	dbMk->SetAttr("blacklist", "tpc");
+// 	dbMk->SetAttr("blacklist", "svt");
+// 	dbMk->SetAttr("blacklist", "ssd");
+// 	dbMk->SetAttr("blacklist", "ist");
+// 	dbMk->SetAttr("blacklist", "pxl");
+// 	dbMk->SetAttr("blacklist", "pp2pp");
+// 	dbMk->SetAttr("blacklist", "ftpc");
+// 	dbMk->SetAttr("blacklist", "emc");
+// 	dbMk->SetAttr("blacklist", "eemc");
+// 	dbMk->SetAttr("blacklist", "mtd");
+// 	dbMk->SetAttr("blacklist", "pmd");
+// 	dbMk->SetAttr("blacklist", "tof");
+// 	dbMk->SetAttr("blacklist", "etof");
+// 	dbMk->SetAttr("blacklist", "rhicf");
+//     }
+// StFcsDbMaker* fcsdbmkr = (StFcsDbMaker*) chain->GetMaker("fcsDbMkr");
+// StFcsDb* fcsDb = (StFcsDb*) chain->GetDataSet("fcsDb");
+// StFcsFastSimulatorMaker *fcssim = (StFcsFastSimulatorMaker*) chain->GetMaker("fcsSim");
+// StFstFastSimMaker *fstFastSim = (StFstFastSimMaker*) chain->GetMaker( "fstFastSim" );
+// StEventMaker* eventMk = (StEventMaker*) chain->GetMaker("MakeEvent");
+// StFcsWaveformFitMaker *fcsWFF= (StFcsWaveformFitMaker*) chain->GetMaker("StFcsWaveformFitMaker");
+// StFwdTrackMaker* track = (StFwdTrackMaker*) chain->GetMaker("fwdTrack");
+// StFcsClusterMaker *fcsclu = (StFcsClusterMaker*) chain->GetMaker("StFcsClusterMaker");
+// fcsclu->setDebug(1);
+// StFcsPointMaker *poi=(StFcsPointMaker *)chain->GetMaker("StFcsPointMaker");
+
 gSystem -> Load("StKumMaker.so") ;
 
-
-//gMessMgr->SetLimit("I",0); //Turn off log info messages
-//gMessMgr->SetLimit("Q",0); //turn off log warn messages
-//gMessMgr->SetLimit("W",0);
+gMessMgr->SetLimit("I",0); //Turn off log info messages
+gMessMgr->SetLimit("Q",0); //turn off log warn messages
+gMessMgr->SetLimit("W",0);
 
 TString OutputFileName;
 
@@ -162,24 +198,39 @@ if(dbMk){
     }
 //StSpinDbMaker* spindb = new StSpinDbMaker("spinDb");
 
+
+
 StFcsDbMaker *fcsDbMkr= new StFcsDbMaker();
-StFcsDb* fcsDb = (StFcsDb*) chain->GetDataSet("fcsDb");
+StFcsDb *fcsDb = new StFcsDb();
     //fcsDb->setDbAccess(0);
     //fcsDb->setDebug(debug);
 
-StEventMaker* eventMk = new StEventMaker(); 
+
+// StFcsFastSimulatorMaker *fcssim = new StFcsFastSimulatorMaker();
+//         fcssim->setDebug(1);
+		
+
+// StFstFastSimMaker *fstFastSim = new StFstFastSimMaker();
+		
+
+StEventMaker* eventMk = new StEventMaker();
 StFcsRawHitMaker* hitmk = new StFcsRawHitMaker();  
     //hitmk->setDebug(debug);
     hitmk->setReadMuDst(readMuDst);
-StFcsWaveformFitMaker *wff= new StFcsWaveformFitMaker();
-    wff->setEnergySelect(0);
+
+StFcsWaveformFitMaker *fcsWFF = new StFcsWaveformFitMaker();
+fcsWFF->setEnergySelect(13,13,1);
 //StFwdTrackMaker* track = new StFwdTrackMaker();
+	
+
     //wff->SetDebug(debug);
     
-StFcsClusterMaker *clu= new StFcsClusterMaker;
-    //clu->setDebug(1);
+StFcsClusterMaker *clu= new StFcsClusterMaker();
+	
 
-StFcsPointMaker *poi=(StFcsPointMaker *)chain->GetMaker("StFcsPointMaker");
+//clu->setDebug(1);
+
+StFcsPointMaker *fcsPoi = new StFcsPointMaker();
 
 //StFcsEventDisplay* fcsed = new StFcsEventDisplay();
 /*
@@ -194,10 +245,16 @@ StFcsEventDisplay* fcsed;
 	    fcsed->setFilter(1);
     }
     */
+StFstDbMaker *fstDb = new StFstDbMaker();
+StFstDb *fstDbData = new StFstDb();
 
+StFstHitMaker *fstHit = new StFstHitMaker();
+	fstHit->SetDebug(1);
 cout << cyan << "InputFileList.Data(): " << InputFileList << reset << endl;
 
-StHcalAnalysisMaker* Hello = new StHcalAnalysisMaker();
+StHadronAnalysisMaker* Hello = new StHadronAnalysisMaker();
+Hello->setDebug(1);
+
 TString out_file=Form("./output/output_hadron.root");
 Hello->set_outputfile(out_file.Data());
 chain->AddMaker(Hello);

@@ -1,10 +1,10 @@
 void test_Analysis(	Int_t nFiles = 10,
-                TString InputFileList = "/star/u/bmagh001/temp/checkpoint-07-06-2023/st_fwd_23074018_raw_1000002.event.root",
-                Int_t nEvents=1000, 
+                TString InputFileList = "/gpfs01/star/pwg_tasks/FwdCalib/DAQ/st_fwd_23074018_raw_1000002.daq",
+                Int_t nEvents=10, 
                 Int_t pedLedPhy=2, 
                 Int_t eventDisplay=1, 
                 int readMuDst=1,
-                Int_t debug=0,
+                Int_t debug=1,
                 const char *geom = "y2023")
 {
     TString _chain;
@@ -24,7 +24,7 @@ void test_Analysis(	Int_t nFiles = 10,
     if (rerun_tracking == false)
         fwdTrackOpt = "";
         
-    _chain = Form("in, %s, useXgeom, AgML, db, StEvent, MakeEvent, MuDST, trgd, fcs, fst, ftt, fttQA, fwdTrack, %s", geom, fwdTrackOpt.c_str());
+    _chain = Form("in, %s, useXgeom, AgML, db, StEvent, MakeEvent, MuDST, trgd, fcs, fcsDat, fst, ftt, fttQA, fwdTrack, %s", geom, fwdTrackOpt.c_str());
     // "in, y2023, useXgeom, AgML, db, StEvent, MakeEvent"
     
     // needed in this wonky spack environment 
@@ -53,19 +53,34 @@ if(dbMk){
 	dbMk->SetAttr("blacklist", "rhicf");
     }
 //StSpinDbMaker* spindb = new StSpinDbMaker("spinDb");
-//StFcsDbMaker *fcsDbMkr= new StFcsDbMaker();
-//StFcsDb* fcsDb = (StFcsDb*) chain->GetDataSet("fcsDb");
+StFcsDbMaker *fcsDbMkr= new StFcsDbMaker();
+StFcsDb* fcsDb = (StFcsDb*) chain->GetDataSet("fcsDb");
     //fcsDb->setDbAccess(0);
     //fcsDb->setDebug(debug);
-
+StMuDstMaker muDstMaker(0, 0, "", InputFileList.Data(), "st:MuDst.root", 10); // set up maker in read mode
+  //                      0, 0                        this means read mode
+  //                           dir                    read all files in this directory
+  //                               file               bla.lis read all file in this list, if (file!="") dir is ignored
+  //                                    filter        apply filter to filenames, multiple filters are separated by ':'
+  //                                          10      maximum number of file to read
 
 //StEventMaker* eventMk = new StEventMaker(); 
-//StFcsRawHitMaker* hitmk = new StFcsRawHitMaker();  
-    //hitmk->setDebug(debug);
-    //hitmk->setReadMuDst(readMuDst);
-//StFcsWaveformFitMaker *wff= new StFcsWaveformFitMaker();
-//    wff->setEnergySelect(13,13,1);
-StFwdTrackMaker* track = new StFwdTrackMaker();
+StFcsRawHitMaker* hitmk = (StFcsRawHitMaker*) chain->GetMaker("fcsHit");
+    hitmk->setReadMuDst(readMuDst);
+cout << hitmk << endl;
+StFcsWaveformFitMaker *wff= (StFcsWaveformFitMaker*) chain->GetMaker("StFcsWaveformFitMaker");
+    //wff->setDebug(debug);
+    wff->setAnaWaveform(true);
+    //wff->setEnergySelect(13,13,1);
+    
+    // cout << wff << endl;
+    StFwdTrackMaker * fwdTrack = (StFwdTrackMaker*) chain->GetMaker("fwdTrack");
+    fwdTrack->setConfigForData( );
+    fwdTrack->setGeoCache( "fGeom.root" );
+    fwdTrack->setSeedFindingWithFst();
+    fwdTrack->SetGenerateTree( false );
+    fwdTrack->SetGenerateHistograms( false );
+    fwdTrack->SetDebug();
     //wff->SetDebug(debug);
     
 //StFcsClusterMaker *clu= new StFcsClusterMaker;
@@ -75,16 +90,19 @@ StFwdTrackMaker* track = new StFwdTrackMaker();
 //gSystem->Load("StFwdTrackMaker");
 //StFwdTrackMaker *fwdTrack = (StFwdTrackMaker *)chain->GetMaker("StFwdTrackMaker");
 
-    gSystem->Load( "libStFcsDbMaker.so" ) ;
-    StFcsDbMaker * fcsDb = new StFcsDbMaker();
-    chain->AddMaker(fcsDb);
-	fcsDb->SetDebug();
+    // gSystem->Load( "libStFcsDbMaker.so" ) ;
+    // StFcsDbMaker * fcsDb = new StFcsDbMaker();
+    // chain->AddMaker(fcsDb);
+	// fcsDb->SetDebug();
 
     //gSystem->Load("StFwdUtils.so");
     //StFwdAnalysisMaker * fwdAna = new StFwdAnalysisMaker();
     //chain->AddMaker(fwdAna);
     gSystem->Load("StKumMaker.so");
-    StModMaker * kumar = new StModMaker();
+    StHadronAnalysisMaker * kumar = new StHadronAnalysisMaker();
+    kumar->setDebug(1);
+    TString out_file=Form("./output/output_hadron.root");
+    kumar->set_outputfile(out_file.Data());
     //StModMaker * mod = new StModMaker();
     // Initialize the chain
     chain->Init();
