@@ -14,15 +14,16 @@ using namespace std;
 #include "StMuDSTMaker/COMMON/StMuDstMaker.h"
 #include "StMuDSTMaker/COMMON/StMuTrack.h"
 #include "StMuDSTMaker/COMMON/StMuEvent.h"
-//#include "StMuDSTMaker/COMMON/StMuFwdTrack.h"
+#include "StMuDSTMaker/COMMON/StMuFwdTrack.h"
+//#include "StMuDSTMaker/COMMON/StMuFwdTrackCollection.h"
 
 #include "StEvent/StEnumerations.h"
 #include "StEvent/StEvent.h"
 #include "StEvent/StFcsCluster.h"
 #include "StEvent/StFcsCollection.h"
-//#include "StEvent/StFwdTrackCollection.h"
+#include "StEvent/StFwdTrackCollection.h"
 #include "StEvent/StFcsHit.h"
-//#include "StEvent/StFwdTrack.h"
+#include "StEvent/StFwdTrack.h"
 #include "StEventTypes.h"
 #include "StEventUtilities/StEventHelper.h"
 #include "StFcsDbMaker/StFcsDb.h"
@@ -48,6 +49,7 @@ using namespace std;
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
+#include "TGraph.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TMath.h"
@@ -114,8 +116,6 @@ Int_t StHcalAnalysisMaker::Init()
   { // Do once at the start of the analysis, create histograms, etc.
       cout << termcolor::green << endl << "Initializing, please wait..." << endl << endl << termcolor::reset;
     mFcsDb = static_cast<StFcsDb*>(GetDataSet("fcsDb")); 
-
-    
     if (!mFcsDb) 
       {
         if (mDebug > 0) {
@@ -215,7 +215,7 @@ Int_t StHcalAnalysisMaker::Make()
         if (mDebug > 0) {
         cerr << termcolor::red << "Failed to get MuDst from input" << endl << termcolor::reset;
         }
-        return kStOK ;
+        return kStErr;
       }
     else
       if (mDebug > 0) {
@@ -224,8 +224,18 @@ Int_t StHcalAnalysisMaker::Make()
 
     StMuEvent* muEvent =  muDst->event();
     if ( !muEvent ) 
-      return kStOK ;
-
+      {
+        if (mDebug > 0) 
+          {
+            cerr << termcolor::red << "Failed to get MuEvent from input" << endl << termcolor::reset;
+          }
+        return kStOK ;
+      }
+    else 
+      if (mDebug > 0) 
+        {
+          cout << termcolor::green << "Got MuEvent from input" << endl << termcolor::reset;
+        }
     StMuTriggerIdCollection* TrigMuColl = &(muEvent->triggerIdCollection());
     if(!TrigMuColl)
       {
@@ -234,49 +244,91 @@ Int_t StHcalAnalysisMaker::Make()
         }
         return false;
       }
+    else
+      {
+        if (mDebug > 0) {
+        cout << termcolor::green << "StFmsMaker::PopulateEventInfo - TrigMuColl" << termcolor::reset << endl;
+        }
+      }
 
     
 	  StEvent* event = (StEvent*)GetInputDS("StEvent");
     if (!event) 
       {
-        if (mDebug > 0) {
-        cerr << termcolor::red << "StKumMaker::Make did not find StEvent" << endl << termcolor::reset;
-        }
+        if (mDebug > 0) 
+          {
+          cerr << termcolor::red << "StKumMaker::Make did not find StEvent" << endl << termcolor::reset;
+          }
         return kStErr;
+      }
+    else
+      {
+        if (mDebug > 0) 
+          {
+            cout << termcolor::green << "StKumMaker::Make found StEvent" << endl << termcolor::reset;
+          }
       }
 
 	  mFcsColl = event->fcsCollection();
-    if (!mFcsColl) 
-      return kStOK;
+    if (!mFcsColl)
+      {
+        cerr << termcolor::bold << termcolor::red << "No FCS collection" << termcolor::reset << endl;
+        return kStErr;
+      }
+    else
+      {
+        cout << termcolor::green << "Number of FcsClusters: " << mFcsColl->numberOfClusters(0) << termcolor::reset << endl;
+      }
 
-/*
+
+    ftc = event->fwdTrackCollection();
+    if (!ftc)
+      {
+        cerr << termcolor::bold << termcolor::red << "No Fwd collection" << termcolor::reset << endl;
+        return kStErr;
+      }
+    else
+      {
+        cout << termcolor::green << "Number of FwdTracks: " << ftc->numberOfTracks() << termcolor::reset << endl;
+      }
     mFwdColl = muDst->muFwdTrackCollection();
     if (!mFwdColl)
       {
         cerr << termcolor::bold << termcolor::red <<  "No muFwd collection" << termcolor::reset << endl;
-        return kStOK;
+        return kStErr;
       }
     else
       {
         cout << termcolor::green << "Number of MuFwdTracks: " << mFwdColl->numberOfFwdTracks() << termcolor::reset << endl;
       }
-*/
+
     int total_nc = 0;
     int total_np = 0;
     
-    /*
-    for (size_t iTrack = 0; iTrack < mFwdColl->numberOfFwdTracks(); iTrack++)
-          {
-            StMuFwdTrack * muFwdTrack = mFwdColl->getFwdTrack( iTrack );
-            cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
-                                      << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
-                                      << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
-                                      << ", mPt=" << muFwdTrack->momentum().Pt() 
-                                      << ", charge=" << (int)muFwdTrack->charge() << " ]" << termcolor::reset << endl;
-            h1_track_charge -> Fill((int)muFwdTrack->charge());
-            h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
-          }
-    */
+    for (StFwdTrack* fwdTrack : ftc->tracks())
+      {
+        cout << termcolor::yellow << "StFwdTrack[ nProjections=" << fwdTrack->mProjections.size() 
+                                  << ", nFTTSeeds=" << fwdTrack->mFTTPoints.size() 
+                                  << ", nFSTSeeds=" << fwdTrack->mFSTPoints.size() 
+                                  << ", mPt=" << fwdTrack->momentum().perp() 
+                                  << ", charge=" << (int)fwdTrack->charge() << " ]" << termcolor::reset << endl;
+        h1_track_charge -> Fill((int)fwdTrack->charge());
+        h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
+      }
+
+
+    // for (size_t iTrack = 0; iTrack < mFwdColl->numberOfFwdTracks(); iTrack++)
+    //       {
+    //         StMuFwdTrack * muFwdTrack = mFwdColl->getFwdTrack( iTrack );
+    //         cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
+    //                                   << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
+    //                                   << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
+    //                                   << ", mPt=" << muFwdTrack->momentum().Pt() 
+    //                                   << ", charge=" << (int)muFwdTrack->charge() << " ]" << termcolor::reset << endl;
+    //         h1_track_charge -> Fill((int)muFwdTrack->charge());
+    //         h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
+    //       }
+    
     total_ecal_hit_energy = 0;
     total_hcal_hit_energy = 0;      
     total_ecal_cluster_energy = 0;
@@ -338,6 +390,7 @@ Int_t StHcalAnalysisMaker::Make()
             cout << termcolor::yellow << termcolor::bold << "Number of points: " << np << termcolor::reset << endl;
           }
           total_np = np + total_np;
+        /*
         for( int ipoint=0; ipoint<np; ++ipoint )
           {
             StFcsPoint* point=points[ipoint];
@@ -440,7 +493,7 @@ Int_t StHcalAnalysisMaker::Make()
             cout << termcolor::red << "Dead zone tripped! Moving to next detector" << termcolor::reset << endl;
             continue;
           }
-
+        */
 
 
         StSPtrVecFcsHit& hits = mFcsColl->hits(det);
@@ -524,16 +577,18 @@ Int_t StHcalAnalysisMaker::Make()
             
             //implement cut on energy
             float clu_energy = clu->energy();
-            if (mDebug > 0) {          
-            cout << termcolor::yellow << "Energy of cluster: " << clu->energy() << " GeV" << endl;
-            cout << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << termcolor::reset << endl;
-            cout << termcolor::bright_yellow << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << termcolor::reset << endl;
-            }
+            if (mDebug > 0) 
+              {          
+                cout << termcolor::yellow << "Energy of cluster: " << clu->energy() << " GeV" << endl;
+                cout << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << termcolor::reset << endl;
+                cout << termcolor::bright_yellow << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << termcolor::reset << endl;
+              }
             StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
             StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
-            if (mDebug > 0) {
-            cout << termcolor::underline << termcolor::yellow << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << termcolor::reset << endl;
-            }
+            if (mDebug > 0) 
+              {
+                cout << termcolor::underline << termcolor::yellow << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << termcolor::reset << endl;
+              }
             if (clu->energy() > 0)
               {
                 if (clu_energy > maxEnergy) 

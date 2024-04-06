@@ -31,6 +31,7 @@ class TFile;
 class TH1F;
 class TH2F;
 class TH3F;
+class TGraph;
 class TProfile;
 class TProfile2D;
 class TRandom;
@@ -101,7 +102,7 @@ class StHcalAnalysisMaker : public StMaker
       StFcsDb* mFcsDb = 0;
       StFcsCollection* mFcsColl = 0;
       StMuFwdTrackCollection* mFwdColl = 0;
-      StFwdTrackCollection* fwdColl = 0;
+      StFwdTrackCollection* ftc = 0;
 
       bool ecal_dead_zone = false;
       bool hcal_dead_zone = false;
@@ -117,8 +118,13 @@ class StHcalAnalysisMaker : public StMaker
       Int_t Make    ( ) ;                               //  The main analysis that is done on each event
       Int_t Finish  ( ) ;                               //  Finish the analysis, close files, and clean up.
 
-      int mDebug = 1;
-      float E_min = 1;
+
+      int mDebug = 0;
+      void setDebug(int v = 0) 
+        {
+          mDebug = v;
+        }
+      float E_min = 0;
 
       void set_outputfile(const char* name)
         {
