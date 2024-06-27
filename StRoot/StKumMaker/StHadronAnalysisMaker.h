@@ -66,6 +66,7 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_hcal_clusters_per_event = 0;
         TH1F* h1_hcal_neigbors_per_cluster = 0;
         TH1F* h1_fwd_track_pt = 0;
+        TH1F* h1_fwd_track_num_of_fit_points = 0;
         TH1F* h1_track_charge = 0;
         TH1F* h1_geant_shower_proj_z = 0;
         TH1F* h1_geant_primary_eta = 0;

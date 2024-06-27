@@ -183,7 +183,10 @@ Int_t StHadronAnalysisMaker::Init()
     h1_geant_primary_pz->SetXTitle("p_{z} [GeV/c]");
     h1_geant_primary_pz->SetYTitle("counts");
 
-    h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 5);
+    h1_fwd_track_num_of_fit_points = new TH1F("h1_fwd_track_num_of_fit_points", "forward track number of fit points", 10, -1, 9);
+    h1_fwd_track_num_of_fit_points->SetXTitle("number of fit points");
+    h1_fwd_track_num_of_fit_points->SetYTitle("counts");
+    h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 15);
     h1_fwd_track_pt->SetXTitle("p_{T} [GeV/c]");
     h1_fwd_track_pt->SetYTitle("counts");
     h1_track_charge = new TH1F("h1_track_charge", "forward track charge", 50, -5, 5);
@@ -358,13 +361,17 @@ Int_t StHadronAnalysisMaker::Make()
     for (size_t iTrack = 0; iTrack < mftc->numberOfFwdTracks(); iTrack++)
           {
             StMuFwdTrack * muFwdTrack = mftc->getFwdTrack( iTrack );
-            cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
+            if (mDebug > 0)
+              {
+                cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
                                       << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
                                       << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
                                       << ", mPt=" << muFwdTrack->momentum().Pt() 
                                       << ", charge=" << (int)muFwdTrack->charge() << " ]" << termcolor::reset << endl;
+              }
             h1_track_charge -> Fill((int)muFwdTrack->charge());
             h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
+            h1_fwd_track_num_of_fit_points -> Fill(muFwdTrack->numberOfFitPoints());
           }
     
     total_ecal_hit_energy = 0;
@@ -714,6 +721,7 @@ Int_t StHadronAnalysisMaker::Finish( )
     h1_hcal_neigbors_per_cluster->Write();
     h1_fwd_track_pt->Write();
     h1_track_charge->Write();
+    h1_fwd_track_num_of_fit_points->Write();
     h1_geant_shower_proj_z->Write();
     h2_geant_shower_proj_xy->Write();
     h1_geant_parent_eta->Write();
