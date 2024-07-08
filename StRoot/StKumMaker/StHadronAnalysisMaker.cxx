@@ -193,6 +193,10 @@ Int_t StHadronAnalysisMaker::Init()
     h1_fwd_track_num_of_fit_points = new TH1F("h1_fwd_track_num_of_fit_points", "forward track number of fit points", 10, -1, 9);
     h1_fwd_track_num_of_fit_points->SetXTitle("number of fit points");
     h1_fwd_track_num_of_fit_points->SetYTitle("counts");
+    h1_num_of_fwd_tracks = new TH1F("h1_num_of_fwd_tracks", "number of forward tracks per event", 501, -1, 500);
+    h1_num_of_fwd_tracks->SetXTitle("number of tracks");
+    h1_num_of_fwd_tracks->SetYTitle("counts");
+
     h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 15);
     h1_fwd_track_pt->SetXTitle("p_{T} [GeV/c]");
     h1_fwd_track_pt->SetYTitle("counts");
@@ -374,6 +378,7 @@ Int_t StHadronAnalysisMaker::Make()
       {   
         cout << termcolor::red << "Number of FwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
       }
+    h1_num_of_fwd_tracks -> Fill(mftc->numberOfFwdTracks());
     if (mftc->numberOfFwdTracks() == 1)
       {
         StMuFwdTrack * muFwdTrack = mftc->getFwdTrack(0);
@@ -692,6 +697,7 @@ Int_t StHadronAnalysisMaker::Finish( )
     h1_ecal_clusters_per_event->Write();
     h1_hcal_clusters_per_event->Write();
     h1_hcal_neigbors_per_cluster->Write();
+    h1_num_of_fwd_tracks->Write();
     h1_fwd_cal_energy_hit->Write();
     h1_fwd_cal_energy_cluster->Write();
     h1_fwd_track_pt->Write();
