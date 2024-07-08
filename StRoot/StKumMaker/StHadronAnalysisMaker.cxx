@@ -157,6 +157,13 @@ Int_t StHadronAnalysisMaker::Init()
     h1_hcal_neigbors_per_cluster->SetXTitle("number of neighbors");
     h1_hcal_neigbors_per_cluster->SetYTitle("counts");
 
+    h1_fwd_cal_energy_hit = new TH1F("h1_fwd_cal_energy_hit", "forward calorimeter energy (hit)", bins, 0, 150);
+    h1_fwd_cal_energy_hit->SetXTitle("Energy [GeV]");
+    h1_fwd_cal_energy_hit->SetYTitle("counts");
+    h1_fwd_cal_energy_cluster = new TH1F("h1_fwd_cal_energy_cluster", "forward calorimeter energy (cluster)", bins, 0, 150);
+    h1_fwd_cal_energy_cluster->SetXTitle("Energy [GeV]");
+    h1_fwd_cal_energy_cluster->SetYTitle("counts");
+
     h1_geant_shower_proj_z = new TH1F("h1_geant_shower_proj_z", "z projection of geant shower", bins, -100, 100);
     h1_geant_shower_proj_z->SetXTitle("z [cm]");
     h1_geant_shower_proj_z->SetYTitle("counts");
@@ -189,9 +196,12 @@ Int_t StHadronAnalysisMaker::Init()
     h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 15);
     h1_fwd_track_pt->SetXTitle("p_{T} [GeV/c]");
     h1_fwd_track_pt->SetYTitle("counts");
-    h1_track_charge = new TH1F("h1_track_charge", "forward track charge", 50, -5, 5);
-    h1_track_charge->SetXTitle("charge [e]");
-    h1_track_charge->SetYTitle("counts");
+    h1_fwd_track_charge = new TH1F("h1_fwd_track_charge", "forward track charge", 50, -5, 5);
+    h1_fwd_track_charge->SetXTitle("charge [e]");
+    h1_fwd_track_charge->SetYTitle("counts");
+    h1_fwd_track_chi2_per_ndf = new TH1F("h1_fwd_track_chi2_per_ndf", "forward track chi2 per ndf", 100, 0, 1000);
+    h1_fwd_track_chi2_per_ndf->SetXTitle("#chi^{2}/ndf");
+    h1_fwd_track_chi2_per_ndf->SetYTitle("counts");
     h2_ecal_cluster_position = new TH2F("h2_ecal_cluster_position", "cluster_position", 300, -150, 150, 300, -150, 150);
     h2_ecal_cluster_position->SetXTitle("x [cm]");
     h2_ecal_cluster_position->SetYTitle("y [cm]");
@@ -204,6 +214,12 @@ Int_t StHadronAnalysisMaker::Init()
     h2_ecal_hcal_hit_energy = new TH2F("h2_ecal_hcal_hit_energy", "ecal_hcal_summed_hit_energy", bins, 0, 150, bins, 0, 150);
     h2_ecal_hcal_hit_energy->SetXTitle("Ecal summed hit energy [GeV]");
     h2_ecal_hcal_hit_energy->SetYTitle("Hcal summed hit energy [GeV]");
+    h2_fwd_cal_energy_vs_track_pt_hit = new TH2F("h2_fwd_cal_energy_vs_track_pt", "forward calorimeter energy vs track pt", bins, 0, 150, bins, 0, 150);
+    h2_fwd_cal_energy_vs_track_pt_hit->SetXTitle("Track p_{T} [GeV/c]");
+    h2_fwd_cal_energy_vs_track_pt_hit->SetYTitle("Calorimeter energy [GeV]");
+    h2_fwd_cal_energy_vs_track_pt_cluster = new TH2F("h2_fwd_cal_energy_vs_track_pt_cluster", "forward calorimeter energy vs track pt", bins, 0, 150, bins, 0, 150);
+    h2_fwd_cal_energy_vs_track_pt_cluster->SetXTitle("Track p_{T} [GeV/c]");
+    h2_fwd_cal_energy_vs_track_pt_cluster->SetYTitle("Calorimeter energy [GeV]");
 
     return kStOK;
   }
@@ -358,351 +374,308 @@ Int_t StHadronAnalysisMaker::Make()
       {   
         cout << termcolor::red << "Number of FwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
       }
-    for (size_t iTrack = 0; iTrack < mftc->numberOfFwdTracks(); iTrack++)
-          {
-            StMuFwdTrack * muFwdTrack = mftc->getFwdTrack( iTrack );
-            if (mDebug > 0)
-              {
-                cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
-                                      << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
-                                      << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
-                                      << ", mPt=" << muFwdTrack->momentum().Pt() 
-                                      << ", charge=" << (int)muFwdTrack->charge() << " ]" << termcolor::reset << endl;
-              }
-            h1_track_charge -> Fill((int)muFwdTrack->charge());
-            h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
-            h1_fwd_track_num_of_fit_points -> Fill(muFwdTrack->numberOfFitPoints());
-          }
-    
-    total_ecal_hit_energy = 0;
-    total_hcal_hit_energy = 0;      
-    total_ecal_cluster_energy = 0;
-    total_hcal_cluster_energy = 0;
-    StThreeVectorD north_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(0, 1, 1);
-    StThreeVectorD north_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(0, kFcsEcalNCol, kFcsEcalNRow);
-    StThreeVectorD south_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(1, 1, 1);
-    StThreeVectorD south_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(1, kFcsEcalNCol, kFcsEcalNRow);
-    if(mDebug > 0)
+    if (mftc->numberOfFwdTracks() == 1)
       {
-        cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner1.x() << ", " << north_ecal_corner1.y() << ", " << north_ecal_corner1.z() << termcolor::reset << endl;
-        cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner2.x() << ", " << north_ecal_corner2.y() << ", " << north_ecal_corner2.z() << termcolor::reset << endl;
-        cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner1.x() << ", " << south_ecal_corner1.y() << ", " << south_ecal_corner1.z() << termcolor::reset << endl;
-        cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner2.x() << ", " << south_ecal_corner2.y() << ", " << south_ecal_corner2.z() << termcolor::reset << endl;
-      }
-    // bool dead_zone_flag = false;
-    for (int det = 0; det <= 3; det++) 
-      {
+        StMuFwdTrack * muFwdTrack = mftc->getFwdTrack(0);
         if (mDebug > 0)
           {
-            cout << termcolor::yellow << termcolor::bold << "Detector: " << det << termcolor::reset << endl;
+            cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
+                                  << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
+                                  << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
+                                  << ", mPt=" << muFwdTrack->momentum().Pt() 
+                                  << ", charge=" << (int)muFwdTrack->charge() << " ]" << termcolor::reset << endl;
           }
-        //int check_Cal = mFcsDb->ecalHcalPres(det); //Ecal North=0, Ecal South=1, Hcal North=2, Hcal South=3, Pres=4/5
-        /*
-        need to fix this check
-        if (check_Cal != 0 || check_Cal != 1) 
-          { 
-            cout << termcolor::red << termcolor::bold << "No forward calorimeter found. Moving to the next" << termcolor::reset << endl;
-            continue;
-          }
-        */
-        StThreeVectorD cal_corner1 = mFcsDb->getStarXYZfromColumnRow(det, 1, 1);
-        StThreeVectorD cal_corner2 = mFcsDb->getStarXYZfromColumnRow(det, kFcsEcalNCol, kFcsEcalNRow);
-        vector<StThreeVectorD> corners = {cal_corner1, cal_corner2};
-
-        // Create an array of the x and y components of the corners vector
-        double corner_x[corners.size()];
-        double corner_y[corners.size()];
-        for (unsigned int i = 0; i < corners.size(); i++) 
-          {
-            corner_x[i] = corners[i].x();
-            corner_y[i] = corners[i].y();
-          }
-        std::sort(corner_x, corner_x + corners.size());
-        std::sort(corner_y, corner_y + corners.size());
+        h1_fwd_track_charge -> Fill((int)muFwdTrack->charge());
+        h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
+        h1_fwd_track_num_of_fit_points -> Fill(muFwdTrack->numberOfFitPoints());
+        h1_fwd_track_chi2_per_ndf -> Fill(muFwdTrack->chi2() / muFwdTrack->ndf());
+          
         
-        // no cut (points)
-        /*
-            if (mDebug>0 && (det == 0||det == 1))
-              {
-                cout << termcolor::yellow << "ECalorimeter dimensions: " << ecal_corner1.x() << ", " << ecal_corner1.y() << ", " << ecal_corner1.z() << termcolor::reset << endl;
-                cout << termcolor::yellow << "ECalorimeter dimensions: " << ecal_corner2.x() << ", " << ecal_corner2.y() << ", " << ecal_corner2.z() << termcolor::reset << endl;
-              }
-              */
-        StSPtrVecFcsPoint& points = fcsColl->points(det);
-        int np = fcsColl->numberOfPoints(det);
-        if (mDebug > 0) 
+        total_ecal_hit_energy = 0;
+        total_hcal_hit_energy = 0;      
+        total_ecal_cluster_energy = 0;
+        total_hcal_cluster_energy = 0;
+        StThreeVectorD north_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(0, 1, 1);
+        StThreeVectorD north_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(0, kFcsEcalNCol, kFcsEcalNRow);
+        StThreeVectorD south_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(1, 1, 1);
+        StThreeVectorD south_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(1, kFcsEcalNCol, kFcsEcalNRow);
+        if(mDebug > 0)
           {
-            cout << termcolor::yellow << termcolor::bold << "Number of points: " << np << termcolor::reset << endl;
+            cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner1.x() << ", " << north_ecal_corner1.y() << ", " << north_ecal_corner1.z() << termcolor::reset << endl;
+            cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner2.x() << ", " << north_ecal_corner2.y() << ", " << north_ecal_corner2.z() << termcolor::reset << endl;
+            cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner1.x() << ", " << south_ecal_corner1.y() << ", " << south_ecal_corner1.z() << termcolor::reset << endl;
+            cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner2.x() << ", " << south_ecal_corner2.y() << ", " << south_ecal_corner2.z() << termcolor::reset << endl;
           }
-          total_np = np + total_np;
-        for( int ipoint=0; ipoint<np; ++ipoint )
+        // bool dead_zone_flag = false;
+        for (int det = 0; det <= 3; det++) 
           {
-            StFcsPoint* point=points[ipoint];
-            StFcsCluster* pointclus = point->cluster();
-            St_g2t_track* trackTable = static_cast<St_g2t_track*>(GetDataSet("g2t_track"));
-            //St_g2t_vertex* vertexTable = static_cast<St_g2t_vertex*>(GetDataSet("g2t_vertex"));
-            g2t_track_st* g2ttrk = 0;
-            //g2t_vertex_st* g2tvert = 0;
-            float frac=0;
-            int ntrk=0;
-            if( !trackTable )
-              { 
-                cout << termcolor::red << "g2t_track Table not found" << termcolor::reset << std::endl; 
-                continue; 
-              }
-            else
+            if (mDebug > 0)
               {
-                const int nTrk = trackTable->GetNRows();
-                if( mDebug>0 )
-                  { 
-                    cout << termcolor::green << "g2t_track table has "<< nTrk << " tracks" << termcolor::reset << std::endl; 
-                  }
-                if( nTrk>0 )
+                cout << termcolor::yellow << termcolor::bold << "Detector: " << det << termcolor::reset << endl;
+              }
+            //int check_Cal = mFcsDb->ecalHcalPres(det); //Ecal North=0, Ecal South=1, Hcal North=2, Hcal South=3, Pres=4/5
+            
+            StThreeVectorD cal_corner1 = mFcsDb->getStarXYZfromColumnRow(det, 1, 1);
+            StThreeVectorD cal_corner2 = mFcsDb->getStarXYZfromColumnRow(det, kFcsEcalNCol, kFcsEcalNRow);
+            vector<StThreeVectorD> corners = {cal_corner1, cal_corner2};
+
+            // Create an array of the x and y components of the corners vector
+            double corner_x[corners.size()];
+            double corner_y[corners.size()];
+            for (unsigned int i = 0; i < corners.size(); i++) 
+              {
+                corner_x[i] = corners[i].x();
+                corner_y[i] = corners[i].y();
+              }
+            std::sort(corner_x, corner_x + corners.size());
+            std::sort(corner_y, corner_y + corners.size());
+            
+            // no cut (points)
+            /*
+                if (mDebug>0 && (det == 0||det == 1))
                   {
-                    g2ttrk = trackTable->GetTable();
-                    if(mDebug > 0)
+                    cout << termcolor::yellow << "ECalorimeter dimensions: " << ecal_corner1.x() << ", " << ecal_corner1.y() << ", " << ecal_corner1.z() << termcolor::reset << endl;
+                    cout << termcolor::yellow << "ECalorimeter dimensions: " << ecal_corner2.x() << ", " << ecal_corner2.y() << ", " << ecal_corner2.z() << termcolor::reset << endl;
+                  }
+                  */
+            StSPtrVecFcsPoint& points = fcsColl->points(det);
+            int np = fcsColl->numberOfPoints(det);
+            if (mDebug > 0) 
+              {
+                cout << termcolor::yellow << termcolor::bold << "Number of points: " << np << termcolor::reset << endl;
+              }
+              total_np = np + total_np;
+            for( int ipoint=0; ipoint<np; ++ipoint )
+              {
+                StFcsPoint* point=points[ipoint];
+                StFcsCluster* pointclus = point->cluster();
+                St_g2t_track* trackTable = static_cast<St_g2t_track*>(GetDataSet("g2t_track"));
+                //St_g2t_vertex* vertexTable = static_cast<St_g2t_vertex*>(GetDataSet("g2t_vertex"));
+                g2t_track_st* g2ttrk = 0;
+                //g2t_vertex_st* g2tvert = 0;
+                float frac=0;
+                int ntrk=0;
+                if( !trackTable )
+                  { 
+                    cout << termcolor::red << "g2t_track Table not found" << termcolor::reset << std::endl; 
+                    continue; 
+                  }
+                else
+                  {
+                    const int nTrk = trackTable->GetNRows();
+                    if( mDebug>0 )
+                      { 
+                        cout << termcolor::green << "g2t_track table has "<< nTrk << " tracks" << termcolor::reset << std::endl; 
+                      }
+                    if( nTrk>0 )
                       {
-                        if( !g2ttrk ) 
-                          { 
-                            cout << termcolor::red << " g2t_track GetTable failed" << termcolor::reset << endl;
-                            continue; 
+                        g2ttrk = trackTable->GetTable();
+                        if(mDebug > 0)
+                          {
+                            if( !g2ttrk ) 
+                              { 
+                                cout << termcolor::red << " g2t_track GetTable failed" << termcolor::reset << endl;
+                                continue; 
+                              }
                           }
                       }
                   }
+                
+                const g2t_track_st* primtrk = mFcsDb->getPrimaryG2tTrack(pointclus,g2ttrk,frac,ntrk);
+                StThreeVectorD projshowerxyz1 = mFcsDb->projectTrackToEcal(primtrk);
+
+                
+                // bool ecal_dead_zone = ( projshowerxyz1.x() < corner_x[0] || projshowerxyz1.x() > corner_x[corners.size()-1] ||
+                //             projshowerxyz1.y() < corner_y[0] || projshowerxyz1.y() > corner_y[corners.size()-1]  ); 
+                if (mDebug > 0)
+                {
+                  cout << "projshowerxyz1.x(): " << projshowerxyz1.x() << endl;
+                  cout << "projshowerxyz1.y(): " << projshowerxyz1.y() << endl;
+                  cout << "projshowerxyz1.z(): " << projshowerxyz1.z() << endl;
+                  cout << "corner_x[0]: " << corner_x[0] << endl;
+                  cout << "corner_x[1]: " << corner_x[1] << endl;
+                  cout << "corner_y[0]: " << corner_y[0] << endl;
+                  cout << "corner_y[1]: " << corner_y[1] << endl;
+                  cout << "projshowerxyz1.x() < corner_x[0]: " << (projshowerxyz1.x() < corner_x[0]) << endl;
+                  cout << "projshowerxyz1.x() > corner_x[1]: " << (projshowerxyz1.x() > corner_x[1]) << endl;
+                  cout << "projshowerxyz1.y() < corner_y[0]: " << (projshowerxyz1.y() < corner_y[0]) << endl;
+                  cout << "projshowerxyz1.y() > corner_y[1]: " << (projshowerxyz1.y() > corner_y[1]) << endl;
+                  cout << termcolor::blue << "Ecal geant shower projection: " << projshowerxyz1.x() << ", " << projshowerxyz1.y() << ", " << projshowerxyz1.z() << termcolor::reset << endl;  
+                }
+
+                // if (ecal_dead_zone && mDebug > 0)
+                //   {
+                //     cout << termcolor::red << "ECal dead zone tripped!" << termcolor::reset << endl;
+                //     dead_zone_flag = true;
+                //     continue;
+                //   }
+                  
+                h1_geant_shower_proj_z->Fill(projshowerxyz1.z());
+                h2_geant_shower_proj_xy->Fill(projshowerxyz1.x(), projshowerxyz1.y());
+                //StThreeVectorD projshowerxyz2 = mFcsDb->projectTrackToEcalSMax(primtrk,g2tvert);
+                //std::cout << "|picotrk:"<<picotrk << "|primtrk:"<<primtrk << std::endl;
+                h1_geant_primary_eta->Fill(primtrk->eta);
+                h1_geant_primary_pt->Fill(sqrt(primtrk->p[0]*primtrk->p[0] + primtrk->p[1]*primtrk->p[1]));
+                h1_geant_primary_pz->Fill(primtrk->p[2]);
+
+                const g2t_track_st* parenttrk = mFcsDb->getParentG2tTrack(pointclus,g2ttrk,frac,ntrk);
+                //StThreeVectorD projparentxyz = mFcsDb->projectTrackToEcalSMax(parenttrk,g2tvert);
+
+                h1_geant_parent_eta->Fill(parenttrk->eta);
+                h1_geant_parent_pt->Fill(sqrt(parenttrk->p[0]*parenttrk->p[0] + parenttrk->p[1]*parenttrk->p[1]));
+                h1_geant_parent_pz->Fill(parenttrk->p[2]);
               }
-            // if( !vertexTable )
-            //   { 
-            //     std::cout<< "g2t_vertex Table not found" << std::endl; continue; 
-            //   }
-	          // else
-            //   {
-            //     const int nVertex = vertexTable->GetNRows();
-            //     if( GetDebug()>0 )
-            //       {
-            //         std::cout << "g2t_vertex table has "<< nVertex << " vertices" << std::endl; 
-            //       }
-            //     if( nVertex>0 )
-            //       {
-            //         g2tvert = vertexTable->GetTable();
-            //         if( !g2tvert) 
-            //           { 
-            //             std::cout << " g2t_vertex GetTable failed" << std::endl; continue; 
-            //           }
-	          //       }
-	          //   }
-            //std::cout << "|parenttrk|Id:"<<parenttrk->id << "|Pid:"<<parenttrk->ge_pid << "|E:"<<parenttrk->e << "|eta:"<<parenttrk->eta << "|frac:"<<frac << "|ntrk:"<<ntrk << std::endl;
-            const g2t_track_st* primtrk = mFcsDb->getPrimaryG2tTrack(pointclus,g2ttrk,frac,ntrk);
-            StThreeVectorD projshowerxyz1 = mFcsDb->projectTrackToEcal(primtrk);
 
-            
-            // bool ecal_dead_zone = ( projshowerxyz1.x() < corner_x[0] || projshowerxyz1.x() > corner_x[corners.size()-1] ||
-            //             projshowerxyz1.y() < corner_y[0] || projshowerxyz1.y() > corner_y[corners.size()-1]  ); 
-            if (mDebug > 0)
-            {
-              cout << "projshowerxyz1.x(): " << projshowerxyz1.x() << endl;
-              cout << "projshowerxyz1.y(): " << projshowerxyz1.y() << endl;
-              cout << "projshowerxyz1.z(): " << projshowerxyz1.z() << endl;
-              cout << "corner_x[0]: " << corner_x[0] << endl;
-              cout << "corner_x[1]: " << corner_x[1] << endl;
-              cout << "corner_y[0]: " << corner_y[0] << endl;
-              cout << "corner_y[1]: " << corner_y[1] << endl;
-              cout << "projshowerxyz1.x() < corner_x[0]: " << (projshowerxyz1.x() < corner_x[0]) << endl;
-              cout << "projshowerxyz1.x() > corner_x[1]: " << (projshowerxyz1.x() > corner_x[1]) << endl;
-              cout << "projshowerxyz1.y() < corner_y[0]: " << (projshowerxyz1.y() < corner_y[0]) << endl;
-              cout << "projshowerxyz1.y() > corner_y[1]: " << (projshowerxyz1.y() > corner_y[1]) << endl;
-              cout << termcolor::blue << "Ecal geant shower projection: " << projshowerxyz1.x() << ", " << projshowerxyz1.y() << ", " << projshowerxyz1.z() << termcolor::reset << endl;  
-            }
-
-            // if (ecal_dead_zone && mDebug > 0)
+            // if (dead_zone_flag && mDebug > 0)
             //   {
-            //     cout << termcolor::red << "ECal dead zone tripped!" << termcolor::reset << endl;
-            //     dead_zone_flag = true;
+            //     cout << termcolor::red << "Dead zone tripped! Moving to next detector" << termcolor::reset << endl;
             //     continue;
             //   }
-              
-            h1_geant_shower_proj_z->Fill(projshowerxyz1.z());
-            h2_geant_shower_proj_xy->Fill(projshowerxyz1.x(), projshowerxyz1.y());
-            //StThreeVectorD projshowerxyz2 = mFcsDb->projectTrackToEcalSMax(primtrk,g2tvert);
-            //std::cout << "|picotrk:"<<picotrk << "|primtrk:"<<primtrk << std::endl;
-            h1_geant_primary_eta->Fill(primtrk->eta);
-            h1_geant_primary_pt->Fill(sqrt(primtrk->p[0]*primtrk->p[0] + primtrk->p[1]*primtrk->p[1]));
-            h1_geant_primary_pz->Fill(primtrk->p[2]);
-
-            const g2t_track_st* parenttrk = mFcsDb->getParentG2tTrack(pointclus,g2ttrk,frac,ntrk);
-            //StThreeVectorD projparentxyz = mFcsDb->projectTrackToEcalSMax(parenttrk,g2tvert);
-
-            h1_geant_parent_eta->Fill(parenttrk->eta);
-            h1_geant_parent_pt->Fill(sqrt(parenttrk->p[0]*parenttrk->p[0] + parenttrk->p[1]*parenttrk->p[1]));
-            h1_geant_parent_pz->Fill(parenttrk->p[2]);
-          }
-
-        // if (dead_zone_flag && mDebug > 0)
-        //   {
-        //     cout << termcolor::red << "Dead zone tripped! Moving to next detector" << termcolor::reset << endl;
-        //     continue;
-        //   }
 
 
 
-        StSPtrVecFcsHit& hits = fcsColl->hits(det);
-        int nh = fcsColl->numberOfHits(det);
-        if (mDebug > 0)
-          {
-            cout << termcolor::yellow << "Number of hits: " << nh << termcolor::reset << endl;
-          }
-        for (int i = 0; i < nh; i++) 
-          {
-            //implement cut on energy
-            StFcsHit* hit = hits[i];
-            unsigned short hit_id = hit->id();
-            if (hit->energy() > 0)
-              {
-                if (mDebug > 0) 
-                  {
-                    cout << termcolor::yellow << "Hit ID: " << hit_id << termcolor::reset << endl;
-                  }
-                float hit_energy = hit->energy();
-                if (mDebug > 0)
-                  {
-                  cout << termcolor::yellow << "Energy of hit: " << hit->energy() << " GeV" << termcolor::reset << endl;
-                  }
-                if(det == 0 || det == 1)
-                  {
-                    total_ecal_hit_energy = total_ecal_hit_energy + hit_energy;
-                  }
-                else if(det == 2 || det == 3)
-                  {
-                    total_hcal_hit_energy = total_hcal_hit_energy + hit_energy;
-                  }
-            /*
-            if (det == 2) 
-              {
-                if (mDebug > 0) {
-                cout << termcolor::green << "Filling North HCal histogram, tower " << hit_id << termcolor::reset << endl;
-                }
-                h1list_NEtower[hit_id]->Fill(hit_energy);
-                if (mDebug > 0) {
-                cout << termcolor::magenta << "Continuing" << termcolor::reset << endl;
-                }
-              } 
-            else if (det == 3) 
-              {
-                if (mDebug > 0) {
-                cout << termcolor::green << "Filling South HCal histogram, tower " << hit_id << termcolor::reset << endl;
-                }
-                h1list_SEtower[hit_id]->Fill(hit_energy);
-                if (mDebug > 0) {
-                cout << termcolor::magenta << "Continuing" << termcolor::reset << endl;
-                }
-              }  //fill in energy spectrum for tower
-              */
-              }
-          }
-        StSPtrVecFcsCluster& clusters = fcsColl->clusters(det);
-        int nc = fcsColl->numberOfClusters(det);
-        
-        
-        if (mDebug > 0) 
-          {
-            cout << termcolor::yellow << "Number of clusters: " << nc << termcolor::reset << endl;
-          }
-        if (mDebug > 0) 
-          LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
-        if(det == 0 || det == 1)
-          {
-            h1_ecal_clusters_per_event->Fill(nc);
-          }
-        else if(det == 2 || det == 3)
-          {
-            h1_hcal_clusters_per_event->Fill(nc);
-          }
-        total_nc = nc + total_nc;
-        //nc = 10;
-        float maxEnergy = -1; // Initialize max energy to a very small value
-
-        for (int i = 0; i < nc; i++) 
-          {
-            StFcsCluster* clu = clusters[i];
-            if(det == 2 || det == 3)
-              {
-                h1_hcal_neigbors_per_cluster->Fill(clu->nNeighbor());
-              }
-            
-            //implement cut on energy
-            float clu_energy = clu->energy();
+            StSPtrVecFcsHit& hits = fcsColl->hits(det);
+            int nh = fcsColl->numberOfHits(det);
             if (mDebug > 0)
-              {          
-                cout << termcolor::yellow << "Energy of cluster: " << clu->energy() << " GeV" << endl;
-                cout << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << termcolor::reset << endl;
-                cout << termcolor::bright_yellow << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << termcolor::reset << endl;
+              {
+                cout << termcolor::yellow << "Number of hits: " << nh << termcolor::reset << endl;
               }
-            StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
-            StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
+            for (int i = 0; i < nh; i++) 
+              {
+                //implement cut on energy
+                StFcsHit* hit = hits[i];
+                unsigned short hit_id = hit->id();
+                if (hit->energy() > 0)
+                  {
+                    if (mDebug > 0) 
+                      {
+                        cout << termcolor::yellow << "Hit ID: " << hit_id << termcolor::reset << endl;
+                      }
+                    float hit_energy = hit->energy();
+                    if (mDebug > 0)
+                      {
+                      cout << termcolor::yellow << "Energy of hit: " << hit->energy() << " GeV" << termcolor::reset << endl;
+                      }
+                    if(det == 0 || det == 1)
+                      {
+                        total_ecal_hit_energy = total_ecal_hit_energy + hit_energy;
+                      }
+                    else if(det == 2 || det == 3)
+                      {
+                        total_hcal_hit_energy = total_hcal_hit_energy + hit_energy;
+                      }
+                  }
+              }
+            StSPtrVecFcsCluster& clusters = fcsColl->clusters(det);
+            int nc = fcsColl->numberOfClusters(det);
+            
+            
             if (mDebug > 0) 
               {
-                cout << termcolor::underline << termcolor::yellow << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << termcolor::reset << endl;
+                cout << termcolor::yellow << "Number of clusters: " << nc << termcolor::reset << endl;
               }
-            if (clu->energy() > 0)
+            if (mDebug > 0) 
+              LOG_INFO << Form("StFcsEventDisplay Det=%1d nhit=%4d nclu=%3d", det, nh, nc) << endm;
+            if(det == 0 || det == 1)
               {
-                if (clu_energy > maxEnergy) 
-                  {
-                    maxEnergy = clu_energy; // Update max energy
-                  }
-                h1_each_cluster_energy->Fill(clu_energy);
-                if(det == 0 || det == 1)
-                  {
-                    h2_ecal_cluster_position->Fill(cluPos.x(), cluPos.y());
-                    total_ecal_cluster_energy = total_ecal_cluster_energy + clu_energy;
-                  }
-                else if(det == 2 || det == 3)
-                  {
-                    h2_hcal_cluster_position->Fill(cluPos.x(), cluPos.y());
-                    total_hcal_cluster_energy = total_hcal_cluster_energy + clu_energy;
-                  }
+                h1_ecal_clusters_per_event->Fill(nc);
               }
-            if (i == nc - 1) 
-              continue;
-            for (int j = i + 1; j < nc; j++) 
+            else if(det == 2 || det == 3)
               {
-                StFcsCluster* cluj = clusters[j];
-                float cluj_energy = cluj->energy();
-                float cluj_x = cluj->x();
-                float cluj_y = cluj->y();
-                StThreeVectorD clujPos = mFcsDb->getStarXYZfromColumnRow(det, cluj_x, cluj_y);
+                h1_hcal_clusters_per_event->Fill(nc);
+              }
+            total_nc = nc + total_nc;
+            //nc = 10;
+            float maxEnergy = -1; // Initialize max energy to a very small value
 
-                h1_two_cluster_energy_nocut->Fill(clu_energy + cluj_energy);
-                float zgg = (abs(clu_energy - cluj_energy)) / (clu_energy + cluj_energy);
-                h1_Zgg_nocut_cluster->Fill(zgg);
-                StThreeVectorD xyzj = mFcsDb->getStarXYZfromColumnRow(det, cluj->x(), cluj->y());
-                StLorentzVectorD pj = mFcsDb->getLorentzVector((xyzj), cluj->energy(), 0);
-                h1_inv_mass_cluster_nocut->Fill((p + pj).m());
-              }
-          }
-        if (mDebug > 0) 
-          {
-            cout << termcolor::red << "Finishing detector " << det << termcolor::reset << endl;
-          }
-        if (maxEnergy > 0) 
-          {
-            if(det == 2 || det == 3)
+            for (int i = 0; i < nc; i++) 
               {
-                h1_hcal_max_cluster_energy_per_event->Fill(maxEnergy);
-              }
-          }
-      } 
+                StFcsCluster* clu = clusters[i];
+                if(det == 2 || det == 3)
+                  {
+                    h1_hcal_neigbors_per_cluster->Fill(clu->nNeighbor());
+                  }
+                
+                //implement cut on energy
+                float clu_energy = clu->energy();
+                if (mDebug > 0)
+                  {          
+                    cout << termcolor::yellow << "Energy of cluster: " << clu->energy() << " GeV" << endl;
+                    cout << "In detector coordinates, cluster at x = " << clu->x() << ", y = " << clu->y() << termcolor::reset << endl;
+                    cout << termcolor::bright_yellow << "scale factor for x: " << mFcsDb->getXWidth(det) << ", y: " << mFcsDb->getYWidth(det) << termcolor::reset << endl;
+                  }
+                StThreeVectorD cluPos = mFcsDb->getStarXYZfromColumnRow(det, clu->x(), clu->y());
+                StLorentzVectorD p = mFcsDb->getLorentzVector(cluPos, clu_energy, 0);
+                if (mDebug > 0) 
+                  {
+                    cout << termcolor::underline << termcolor::yellow << "In physical coordinates, cluster at x = " << cluPos.x() << ", y = " << cluPos.y() << termcolor::reset << endl;
+                  }
+                if (clu->energy() > 0)
+                  {
+                    if (clu_energy > maxEnergy) 
+                      {
+                        maxEnergy = clu_energy; // Update max energy
+                      }
+                    h1_each_cluster_energy->Fill(clu_energy);
+                    if(det == 0 || det == 1)
+                      {
+                        h2_ecal_cluster_position->Fill(cluPos.x(), cluPos.y());
+                        total_ecal_cluster_energy = total_ecal_cluster_energy + clu_energy;
+                      }
+                    else if(det == 2 || det == 3)
+                      {
+                        h2_hcal_cluster_position->Fill(cluPos.x(), cluPos.y());
+                        total_hcal_cluster_energy = total_hcal_cluster_energy + clu_energy;
+                      }
+                  }
+                if (i == nc - 1) 
+                  continue;
+                for (int j = i + 1; j < nc; j++) 
+                  {
+                    StFcsCluster* cluj = clusters[j];
+                    float cluj_energy = cluj->energy();
+                    float cluj_x = cluj->x();
+                    float cluj_y = cluj->y();
+                    StThreeVectorD clujPos = mFcsDb->getStarXYZfromColumnRow(det, cluj_x, cluj_y);
 
-    
-    //cut on energy, E_min
-    if (total_ecal_hit_energy > E_min && total_hcal_hit_energy > E_min) 
-      {
-        h2_ecal_hcal_hit_energy->Fill(total_ecal_hit_energy, total_hcal_hit_energy);
+                    h1_two_cluster_energy_nocut->Fill(clu_energy + cluj_energy);
+                    float zgg = (abs(clu_energy - cluj_energy)) / (clu_energy + cluj_energy);
+                    h1_Zgg_nocut_cluster->Fill(zgg);
+                    StThreeVectorD xyzj = mFcsDb->getStarXYZfromColumnRow(det, cluj->x(), cluj->y());
+                    StLorentzVectorD pj = mFcsDb->getLorentzVector((xyzj), cluj->energy(), 0);
+                    h1_inv_mass_cluster_nocut->Fill((p + pj).m());
+                  }
+              }
+            if (mDebug > 0) 
+              {
+                cout << termcolor::red << "Finishing detector " << det << termcolor::reset << endl;
+              }
+            if (maxEnergy > 0) 
+              {
+                if(det == 2 || det == 3)
+                  {
+                    h1_hcal_max_cluster_energy_per_event->Fill(maxEnergy);
+                  }
+              }
+          } 
+
+        
+        //cut on energy, E_min
+        if (total_ecal_hit_energy > E_min && total_hcal_hit_energy > E_min) 
+          {
+            h2_ecal_hcal_hit_energy->Fill(total_ecal_hit_energy, total_hcal_hit_energy);
+            h2_fwd_cal_energy_vs_track_pt_hit->Fill(muFwdTrack->momentum().Pt(), total_ecal_hit_energy + total_hcal_hit_energy);
+            h1_fwd_cal_energy_hit->Fill(total_ecal_hit_energy + total_hcal_hit_energy);
+          }
+        if (total_ecal_cluster_energy > E_min && total_hcal_cluster_energy > E_min) 
+          {
+            h2_ecal_hcal_cluster_energy->Fill(total_ecal_cluster_energy, total_hcal_cluster_energy);
+            h2_fwd_cal_energy_vs_track_pt_cluster->Fill(muFwdTrack->momentum().Pt(), total_ecal_cluster_energy + total_hcal_cluster_energy);
+            h1_fwd_cal_energy_cluster->Fill(total_ecal_cluster_energy + total_hcal_cluster_energy);
+          }
+        //dead_zone_flag = false;
       }
-    if (total_ecal_cluster_energy > E_min && total_hcal_cluster_energy > E_min) 
-      {
-        h2_ecal_hcal_cluster_energy->Fill(total_ecal_cluster_energy, total_hcal_cluster_energy);
-      }
-    //dead_zone_flag = false;
-    return kStOK ;
+        return kStOK ;
   }
   
 
@@ -719,9 +692,12 @@ Int_t StHadronAnalysisMaker::Finish( )
     h1_ecal_clusters_per_event->Write();
     h1_hcal_clusters_per_event->Write();
     h1_hcal_neigbors_per_cluster->Write();
+    h1_fwd_cal_energy_hit->Write();
+    h1_fwd_cal_energy_cluster->Write();
     h1_fwd_track_pt->Write();
-    h1_track_charge->Write();
+    h1_fwd_track_charge->Write();
     h1_fwd_track_num_of_fit_points->Write();
+    h1_fwd_track_chi2_per_ndf->Write();
     h1_geant_shower_proj_z->Write();
     h2_geant_shower_proj_xy->Write();
     h1_geant_parent_eta->Write();
@@ -734,6 +710,8 @@ Int_t StHadronAnalysisMaker::Finish( )
     h2_hcal_cluster_position->Write();
     h2_ecal_hcal_cluster_energy->Write();
     h2_ecal_hcal_hit_energy->Write();
+    h2_fwd_cal_energy_vs_track_pt_hit->Write();
+    h2_fwd_cal_energy_vs_track_pt_cluster->Write();
     mHistogramOutput->Write();
     mHistogramOutput->Close();
     

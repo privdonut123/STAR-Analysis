@@ -65,9 +65,12 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_ecal_clusters_per_event = 0;
         TH1F* h1_hcal_clusters_per_event = 0;
         TH1F* h1_hcal_neigbors_per_cluster = 0;
+        TH1F* h1_fwd_cal_energy_hit = 0;
+        TH1F* h1_fwd_cal_energy_cluster = 0;
         TH1F* h1_fwd_track_pt = 0;
         TH1F* h1_fwd_track_num_of_fit_points = 0;
-        TH1F* h1_track_charge = 0;
+        TH1F* h1_fwd_track_charge = 0;
+        TH1F* h1_fwd_track_chi2_per_ndf = 0;
         TH1F* h1_geant_shower_proj_z = 0;
         TH1F* h1_geant_primary_eta = 0;
         TH1F* h1_geant_primary_pt = 0;
@@ -81,6 +84,8 @@ class StHadronAnalysisMaker : public StMaker
         TH2F* h2_hcal_cluster_position = 0;  //h2_cluster_position_nocut
         TH2F* h2_ecal_hcal_cluster_energy = 0;        //h2_ecal_hcal_cluster_energy
         TH2F* h2_ecal_hcal_hit_energy = 0; 
+        TH2F* h2_fwd_cal_energy_vs_track_pt_hit = 0;
+        TH2F* h2_fwd_cal_energy_vs_track_pt_cluster = 0;
 
         int bins = 150;
         float m_low = 0;
