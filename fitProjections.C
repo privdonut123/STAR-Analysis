@@ -131,7 +131,7 @@ void fitProjections()
         gSystem->Load("libStFcsWaveformFitMaker.so");
         //PeakAna *pA = new PeakAna();
         
-        TSystemDirectory dir("dir", "input/fit_proj_input/");
+        TSystemDirectory dir("dir", "input/track_qa/eta_3_0/");
         TList *files = dir.GetListOfFiles();
 
         if (files) 
@@ -145,7 +145,7 @@ void fitProjections()
                     file_name = file->GetName();
                     if (!file->IsDirectory() && file_name.EndsWith(".root")) 
                     {
-                        TString filePath = "input/fit_proj_input/" + file_name;
+                        TString filePath = "input/track_qa/eta_3_0/" + file_name;
                         TFile *in_file = TFile::Open(filePath); // Open the file
                         
                         TDirectory *subdir_pid = out_file->mkdir(file_name.ReplaceAll(".root", "")); // Create a subdirectory for this file
@@ -153,16 +153,16 @@ void fitProjections()
 
                         TH2F *h2_ecal_hcal_cluster_energy = (TH2F*)in_file->Get("h2_ecal_hcal_cluster_energy"); // replace with your histogram name
                         TH2F *h2_ecal_hcal_hit_energy = (TH2F*)in_file->Get("h2_ecal_hcal_hit_energy"); // replace with your histogram name
-                        TH1D *h1_fwd_track_pt = (TH1D*)in_file->Get("h1_fwd_track_pt");
+                        TH1D *h1_fwd_pt_res = (TH1D*)in_file->Get("h1_fwd_pt_res");
                         cout << "Current subdirectory in out_file: " << subdir_pid->GetName() << endl;
-                        projections_and_fits(subdir_pid, h2_ecal_hcal_cluster_energy, h1_fwd_track_pt, "cluster");
+                        projections_and_fits(subdir_pid, h2_ecal_hcal_cluster_energy, h1_fwd_pt_res, "cluster");
                         subdir_pid->GetMotherDir()->cd(); // Change back to the parent directory
                         cout << "Current directory in out_file: " << subdir_pid->GetMotherDir()->GetName() << endl;
-                        projections_and_fits(subdir_pid, h2_ecal_hcal_hit_energy, h1_fwd_track_pt, "hit");
+                        projections_and_fits(subdir_pid, h2_ecal_hcal_hit_energy, h1_fwd_pt_res, "hit");
                         subdir_pid->GetMotherDir()->cd(); // Change back to the parent directory
                         cout << "Current directory in out_file: " << subdir_pid->GetMotherDir()->GetName() << endl;
                         cout << "Current subdirectory in out_file: " << subdir_pid->GetName() << endl;
-                        projections_and_fits(subdir_pid, h2_ecal_hcal_cluster_energy, h1_fwd_track_pt, "track_pt");
+                        projections_and_fits(subdir_pid, h2_ecal_hcal_cluster_energy, h1_fwd_pt_res, "track_pt");
                         
                         in_file->Close();
                         
@@ -193,30 +193,47 @@ void projections_and_fits(TDirectory *dir, TH2F *h2, TH1D *h1_fwd_track, TString
                 PeakAna *pA_pt = new PeakAna();
 
                 pA_pt->SetData(h1_fwd_track);
-                pA_pt->SetBaseline(0,.75);
-                pA_pt->SetRange(0, 0, 15, 1000000);
+                // pA_pt->SetBaseline(0,.75);
+                pA_pt->SetRange(-1, 0, 1, 1000000);
                 pA_pt->SetFilter(2,5);
+                
                 //pA->SetTunnelThreshold(0.1);
                 pA_pt->SetTunnelScale(0.1);
                 pA_pt->SetTunnelSigma(1);
                 pA_pt->SetBaseline(10000,5);
                 pA_pt->AnalyzeForPeak();
-                // pA_pt->Print();
-                
-                for(int i_peak = 0; i_peak < pA_pt->NPeaks() && pA_pt->PeakProb(pA_pt->GetPeak(i_peak), pA_pt->TunnelScale(), pA_pt->TunnelSigma()) < 10**(-10); i_peak++)
+                pA_pt->Print();
+                if (pA_pt->NPeaks() == 0)
                     {
-                        FitAndEnergy *pt_fit_param = new FitAndEnergy();
-                        pt_fit_param->skew_gauss_dummy_to_full_fit(pA_pt->GetPeak(i_peak).mPeakY, pA_pt->GetPeak(i_peak).mPeakX, (pA_pt->GetPeak(i_peak).mEndX - pA_pt->GetPeak(i_peak).mStartX) / 8, h1_fwd_track);
-                        TF1 *peak_fit = new TF1(Form("peak_fit_%d", i_peak), "[0]*exp(-0.5*((x-[1])/[2])**2)*(1+TMath::Erf([3]*(x-[1])/[2]))", h1_fwd_track->GetXaxis()->GetXmin(), h1_fwd_track->GetXaxis()->GetXmax());
-                        peak_fit->FixParameter(0, pt_fit_param->GetAmplitudeFit());
-                        peak_fit->FixParameter(1, pt_fit_param->GetMeanFit());
-                        peak_fit->FixParameter(2, pt_fit_param->GetStdDevFit());
-                        peak_fit->FixParameter(3, 0);
-                        peak_fit->SetLineColor(kBlue);
-                        peak_fit->SetNpx(1000);
-                        h1_fwd_track->Fit(peak_fit, "RQ+");
+                        cout << "No peaks found in the forward track pT histogram" << endl;
+                        return;
                     }
-                
+                else
+                    {
+                        cout << "Peaks found in the forward track pT histogram" << endl;
+                        
+                        for(int i_peak = 0; i_peak < pA_pt->NPeaks(); i_peak++)
+                            {
+                                if(pA_pt->PeakProb(pA_pt->GetPeak(i_peak), pA_pt->TunnelScale(), pA_pt->TunnelSigma()) < 1e-10)
+                                    {
+                                        cout << "Preparing for fit of peak "  << 1e-10 << endl;
+                                        FitAndEnergy *pt_fit_param = new FitAndEnergy();
+                                        pt_fit_param->skew_gauss_dummy_to_full_fit(pA_pt->GetPeak(i_peak).mPeakY, pA_pt->GetPeak(i_peak).mPeakX, (pA_pt->GetPeak(i_peak).mEndX - pA_pt->GetPeak(i_peak).mStartX) / 2, h1_fwd_track);
+                                        // pt_fit_param->skew_gauss_dummy_to_full_fit(h1_fwd_track->GetBinContent(h1_fwd_track->GetMaximumBin()), h1_fwd_track->GetBinCenter(h1_fwd_track->GetMaximumBin()), .15, h1_fwd_track);
+                                        cout << "Peak guess: " << h1_fwd_track->GetBinCenter(h1_fwd_track->GetMaximumBin()) << " with amplitude: " << h1_fwd_track->GetBinContent(h1_fwd_track->GetMaximumBin()) << endl;
+                                        TF1 *peak_fit = new TF1(Form("peak_fit_%d", i_peak), "[0]*exp(-0.5*((x-[1])/[2])**2)*(1+TMath::Erf([3]*(x-[1])/[2]))", h1_fwd_track->GetXaxis()->GetXmin(), h1_fwd_track->GetXaxis()->GetXmax());
+                                        peak_fit->FixParameter(0, pt_fit_param->GetAmplitudeFit());
+                                        peak_fit->FixParameter(1, pt_fit_param->GetMeanFit());
+                                        peak_fit->FixParameter(2, pt_fit_param->GetStdDevFit());
+                                        peak_fit->FixParameter(3, pt_fit_param->GetSkewnessFit());
+                                        peak_fit->SetLineColor(kBlue);
+                                        peak_fit->SetNpx(1000);
+                                        h1_fwd_track->Fit(peak_fit, "RQ+");
+                                        cout << "Peak " << i_peak << " with window: " << pA_pt->GetPeak(i_peak).mStartX << " to " << pA_pt->GetPeak(i_peak).mEndX << endl;
+                                        cout << "Peak " << i_peak << " with amplitude: " << pA_pt->GetPeak(i_peak).mPeakY << endl;
+                                    }
+                            }
+                    }
                 TCanvas *c_fwd_track = new TCanvas("Fwd_Track_pt", "Fwd_Track_pt", 800, 600);
                 h1_fwd_track->SetTitle("Forward Track pT");
                 h1_fwd_track->GetXaxis()->SetTitle("pT (GeV)");
@@ -344,7 +361,7 @@ void projections_and_fits(TDirectory *dir, TH2F *h2, TH1D *h1_fwd_track, TString
                                 peak_fit->FixParameter(0, peak_fit_param->GetAmplitudeFit());
                                 peak_fit->FixParameter(1, peak_fit_param->GetMeanFit());
                                 peak_fit->FixParameter(2, peak_fit_param->GetStdDevFit());
-                                peak_fit->FixParameter(3, 0);
+                                peak_fit->FixParameter(3, peak_fit_param->GetSkewnessFit());
                                 peak_fit->SetLineColor(kBlue);
                                 delete peak_fit_param;
                             }
@@ -358,7 +375,7 @@ void projections_and_fits(TDirectory *dir, TH2F *h2, TH1D *h1_fwd_track, TString
                                 peak_fit->FixParameter(0, peak_fit_param->GetAmplitudeFit());
                                 peak_fit->FixParameter(1, peak_fit_param->GetMeanFit());
                                 peak_fit->FixParameter(2, peak_fit_param->GetStdDevFit());
-                                peak_fit->FixParameter(3, 0);
+                                peak_fit->FixParameter(3, peak_fit_param->GetSkewnessFit());
                                 peak_fit->SetLineColor(kGreen);
                                 leg->AddEntry(peakMarker, Form("Peak %d Skewed gaussian fit parameters", i_peak), "p");
                                 leg->AddEntry((TObject*)0, Form("Amplitude (A): %.3f", peak_fit->GetParameter(0)), "");

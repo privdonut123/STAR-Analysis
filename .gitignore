@@ -20,3 +20,5 @@ README.md
 output/
 *.root
 mem.dat
+qa.C
+track_qa.C

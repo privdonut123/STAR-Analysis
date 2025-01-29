@@ -68,6 +68,7 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_fwd_cal_energy_hit = 0;
         TH1F* h1_fwd_cal_energy_cluster = 0;
         TH1F* h1_fwd_track_pt = 0;
+        TH1F* h1_fwd_pt_res = 0;
         TH1F* h1_fwd_track_num_of_fit_points = 0;
         TH1F* h1_num_of_fwd_tracks = 0;
         TH1F* h1_fwd_track_charge = 0;

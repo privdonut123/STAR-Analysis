@@ -10,7 +10,7 @@ const string reset("\033[0m");
 
     
 void hadron_Analysis(	Int_t nFiles = 1,
-                		TString InputFileList = "/direct/star+u/bmagh001/MuDst/input/st_fwd_22356022_raw_2500032.MuDst.root",
+                		TString InputFileList = "/star/u/bmagh001/MuDst/input/single_particle_sim/pi-.e60.MuDst.root",
                 		Int_t nEvents=100, 
                 		Int_t pedLedPhy=2, 
 						Int_t eventDisplay=1, 
