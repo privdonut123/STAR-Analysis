@@ -61,6 +61,7 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_each_cluster_energy = 0;        //h1_each_cluster_energy:each cluster energy(no cut)
         TH1F* h1_hcal_max_cluster_energy_per_event = 0;    //h1_hcal_max_cluster_energy:hcal max cluster energy(no cut)
         TH1F* h1_Zgg_nocut_cluster = 0;          //h1_Zgg_nocut_cluster:Zgg without cut
+        TH1F* h1_num_of_points = 0;
         TH1F* h1_inv_mass_cluster_nocut = 0;
         TH1F* h1_ecal_clusters_per_event = 0;
         TH1F* h1_hcal_clusters_per_event = 0;
@@ -71,15 +72,26 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_fwd_pt_res = 0;
         TH1F* h1_fwd_track_num_of_fit_points = 0;
         TH1F* h1_num_of_fwd_tracks = 0;
+        TH1F* h1_fwd_track_is_primary = 0;
         TH1F* h1_fwd_track_charge = 0;
         TH1F* h1_fwd_track_chi2_per_ndf = 0;
+
         TH1F* h1_geant_shower_proj_z = 0;
+        TH1F* h1_geant_track_id = 0;
+        TH1F* h1_geant_vtx_z = 0;
+        TH1F* h1_geant_start_vertex = 0;
+        TH1F* h1_geant_stop_vertex = 0;
+        TH1F* h1_geant_particle_id = 0;
+        TH1F* h1_geant_num_of_tracks = 0;
         TH1F* h1_geant_primary_eta = 0;
         TH1F* h1_geant_primary_pt = 0;
         TH1F* h1_geant_primary_pz = 0;
+        TH1F* h1_geant_primary_energy = 0;
         TH1F* h1_geant_parent_eta = 0;
         TH1F* h1_geant_parent_pt = 0;
         TH1F* h1_geant_parent_pz = 0;
+        TH1F* h1_fwd_cal_hit_resolution = 0;
+        TH1F* h1_fwd_cal_cluster_resolution = 0;
 
         TH2F* h2_geant_shower_proj_xy = 0;
         TH2F* h2_ecal_cluster_position = 0;        
@@ -88,6 +100,9 @@ class StHadronAnalysisMaker : public StMaker
         TH2F* h2_ecal_hcal_hit_energy = 0; 
         TH2F* h2_fwd_cal_energy_vs_track_pt_hit = 0;
         TH2F* h2_fwd_cal_energy_vs_track_pt_cluster = 0;
+        TH2F* h2_fwd_pt_res_vs_eta = 0;
+        TH2F* h2_ecal_hcal_cluster_energy_res_vs_eta = 0;
+        TH2F* h2_ecal_hcal_hit_energy_res_vs_eta = 0;
 
         int bins = 150;
         float m_low = 0;
