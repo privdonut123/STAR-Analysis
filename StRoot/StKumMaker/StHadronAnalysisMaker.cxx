@@ -46,6 +46,8 @@ using namespace std;
 #include "StarClassLibrary/SystemOfUnits.h"
 
 #include "StSpinPool/StSpinDbMaker/StSpinDbMaker.h"
+#include "StThreeVectorD.hh"
+// #include "StContainers.h"
 
 
 #include "TH1.h"
@@ -268,6 +270,13 @@ Int_t StHadronAnalysisMaker::Init()
     h2_ecal_hcal_hit_energy_res_vs_eta->SetXTitle("hit energy resolution");
     h2_ecal_hcal_hit_energy_res_vs_eta->SetYTitle("#eta");
 
+    h1_single_cluster_ecal_energy = new TH1F("h1_single_cluster_ecal_energy", "single cluster energy on ecal", bins, 0, 5);
+    h1_single_cluster_ecal_energy->SetXTitle("Energy [GeV]");
+    h1_single_cluster_ecal_energy->SetYTitle("counts");
+    h1_single_cluster_hcal_energy = new TH1F("h1_single_cluster_hcal_energy", "single cluster energy on hcal", bins, 0, 5);
+    h1_single_cluster_hcal_energy->SetXTitle("Energy [GeV]");
+    h1_single_cluster_hcal_energy->SetYTitle("counts");
+
 
     h1_fwd_cal_energy_hit = new TH1F("h1_fwd_cal_energy_hit", "forward calorimeter energy (hit)", bins, 0, 150);
     h1_fwd_cal_energy_hit->SetXTitle("Energy [GeV]");
@@ -444,48 +453,93 @@ Int_t StHadronAnalysisMaker::Make()
   
     if(mDebug > 0)
       {   
-        cout << termcolor::red << "Number of FwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
+        cout << termcolor::red << "Number of muFwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
       }
-    h1_num_of_fwd_tracks -> Fill(mftc->numberOfFwdTracks());
-    if (mftc->numberOfFwdTracks() <= 4 && mftc->numberOfFwdTracks() > 1) // CURRENT HACK OF FWDTRACKMAKER
+    // h1_num_of_fwd_tracks -> Fill(mftc->numberOfFwdTracks());
+    
+    if (ftc->numberOfTracks() <= 4 && ftc->numberOfTracks() > 1) // CURRENT HACK OF FWDTRACKMAKER
       {
-        StMuFwdTrack* muFwdTrack = mftc->getFwdTrack(1); // 0 = global track, 1 = primary track
-        if(muFwdTrack->isPrimary() == true && muFwdTrack->numberOfFitPoints() == 8)
+        StFwdTrack* fwdTrack = ftc->tracks()[1]; // 0 = global track, 1 = primary track
+        h1_num_of_fwd_tracks -> Fill(ftc->numberOfTracks());
+        
+        // if(fwdTrack->isPrimary() == true && fwdTrack->numberOfFitPoints() == 8)
+        if(fwdTrack->numberOfFitPoints() >= 8) // CURRENT HACK OF FWDTRACKMAKER
           {
             h1_fwd_track_is_primary->Fill(1);
             float prim_trk_energy;
-            StFwdTrack* tempFwdTrack = (StFwdTrack*)mftc->getFwdTrack(1);
-            StPtrVecFcsCluster& trackMatchEcalClusters = tempFwdTrack->ecalClusters();
+            StPtrVecFcsCluster& trackMatchEcalClusters = fwdTrack->ecalClusters();
+            StPtrVecFcsCluster& trackMatchHcalClusters = fwdTrack->hcalClusters();
             
             if (mDebug > 0)
               {
-                cout << termcolor::yellow << "StMuFwdTrack[ nProjections=" << muFwdTrack->mProjections.size() 
-                                          << ", nFTTSeeds=" << muFwdTrack->mFTTPoints.size() 
-                                          << ", nFSTSeeds=" << muFwdTrack->mFSTPoints.size() 
-                                          << ", mPt=" << muFwdTrack->momentum().Pt() 
-                                          << ", charge=" << (int)muFwdTrack->charge() << " ]" 
-                                          << ", number of track matched ECal clusters: " << trackMatchEcalClusters.size() << termcolor::reset << endl;
+                cout << termcolor::yellow << "StFwdTrack[ nProjections=" << fwdTrack->mProjections.size() 
+                                          << ", nFTTSeeds=" << fwdTrack->mFTTPoints.size() 
+                                          << ", nFSTSeeds=" << fwdTrack->mFSTPoints.size() 
+                                          << ", mPt=" << fwdTrack->momentum().perp() 
+                                          << ", charge=" << (int)fwdTrack->charge() << " ]" << termcolor::reset << endl;
               }
-            h1_fwd_track_num_of_fit_points -> Fill(muFwdTrack->numberOfFitPoints());
-            h1_fwd_track_charge -> Fill((int)muFwdTrack->charge());
-            h1_fwd_track_pt -> Fill(muFwdTrack->momentum().Pt());
-            h1_fwd_track_chi2_per_ndf -> Fill(muFwdTrack->chi2() / muFwdTrack->ndf());
+            
+            if (mDebug > 0)
+              {
+                cout << termcolor::green << "Number of track matched ECal clusters: " << trackMatchEcalClusters.size() << termcolor::reset << endl;
+                cout << termcolor::green << "Number of track matched HCal clusters: " << trackMatchHcalClusters.size() << termcolor::reset << endl;
+              }
+            
+            for( int i = 0; i < trackMatchEcalClusters.size(); i++ )
+              {
+                StFcsCluster* ecalCluster = trackMatchEcalClusters[i];
+                if (ecalCluster->nTowers() <= 2)
+                  {
+                    if (mDebug > 0)
+                      {
+                        cout << termcolor::blue << "ECal Cluster: " << ecalCluster->id() 
+                             << ", energy: " << ecalCluster->energy() 
+                             << ", number of towers: " << ecalCluster->nTowers() 
+                             << termcolor::reset << endl;
+                      }
+                    h1_single_cluster_ecal_energy -> Fill(ecalCluster->energy());    
+
+                  }
+              }
+            
+            for( int i = 0; i < trackMatchHcalClusters.size(); i++ )
+              {
+                StFcsCluster* hcalCluster = trackMatchHcalClusters[i];
+                if (hcalCluster->nTowers() <= 2)
+                  {
+                    if (mDebug > 0)
+                      {
+                        cout << termcolor::blue << "HCal Cluster: " << hcalCluster->id() 
+                             << ", energy: " << hcalCluster->energy() 
+                             << ", number of towers: " << hcalCluster->nTowers()
+                             << termcolor::reset << endl;
+                      }
+                    h1_single_cluster_hcal_energy -> Fill(hcalCluster->energy());
+                  }
+              }
+
+            //ADD cut on num of fit points and chi_sq
+            h1_fwd_track_num_of_fit_points -> Fill(fwdTrack->numberOfFitPoints());
+            h1_fwd_track_charge -> Fill((int)fwdTrack->charge());
+            
+            h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
+            h1_fwd_track_chi2_per_ndf -> Fill(fwdTrack->chi2() / fwdTrack->ndf());
             
             total_ecal_hit_energy = 0;
             total_hcal_hit_energy = 0;      
             total_ecal_cluster_energy = 0;
             total_hcal_cluster_energy = 0;
-            StThreeVectorD north_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(0, 1, 1);
-            StThreeVectorD north_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(0, kFcsEcalNCol, kFcsEcalNRow);
-            StThreeVectorD south_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(1, 1, 1);
-            StThreeVectorD south_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(1, kFcsEcalNCol, kFcsEcalNRow);
-            if(mDebug > 0)
-              {
-                cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner1.x() << ", " << north_ecal_corner1.y() << ", " << north_ecal_corner1.z() << termcolor::reset << endl;
-                cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner2.x() << ", " << north_ecal_corner2.y() << ", " << north_ecal_corner2.z() << termcolor::reset << endl;
-                cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner1.x() << ", " << south_ecal_corner1.y() << ", " << south_ecal_corner1.z() << termcolor::reset << endl;
-                cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner2.x() << ", " << south_ecal_corner2.y() << ", " << south_ecal_corner2.z() << termcolor::reset << endl;
-              }
+            // StThreeVectorD north_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(0, 1, 1);
+            // StThreeVectorD north_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(0, kFcsEcalNCol, kFcsEcalNRow);
+            // StThreeVectorD south_ecal_corner1 = mFcsDb->getStarXYZfromColumnRow(1, 1, 1);
+            // StThreeVectorD south_ecal_corner2 = mFcsDb->getStarXYZfromColumnRow(1, kFcsEcalNCol, kFcsEcalNRow);
+            // if(mDebug > 0)
+            //   {
+            //     cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner1.x() << ", " << north_ecal_corner1.y() << ", " << north_ecal_corner1.z() << termcolor::reset << endl;
+            //     cout << termcolor::yellow << "North ECalorimeter dimensions: " << north_ecal_corner2.x() << ", " << north_ecal_corner2.y() << ", " << north_ecal_corner2.z() << termcolor::reset << endl;
+            //     cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner1.x() << ", " << south_ecal_corner1.y() << ", " << south_ecal_corner1.z() << termcolor::reset << endl;
+            //     cout << termcolor::yellow << "South ECalorimeter dimensions: " << south_ecal_corner2.x() << ", " << south_ecal_corner2.y() << ", " << south_ecal_corner2.z() << termcolor::reset << endl;
+            //   }
             // bool dead_zone_flag = false;
             St_g2t_track* trackTable = static_cast<St_g2t_track*>(GetDataSet("g2t_track"));
             St_g2t_vertex* vertexTable = static_cast<St_g2t_vertex*>(GetDataSet("g2t_vertex"));
@@ -533,8 +587,8 @@ Int_t StHadronAnalysisMaker::Make()
             g2t_vertex_st* primvtx = g2tvert;
             h1_geant_vtx_z->Fill(primvtx->ge_x[2]);
 
-            h1_fwd_pt_res->Fill((muFwdTrack->momentum().Pt() - primtrk->pt) / primtrk->pt);
-            h2_fwd_pt_res_vs_eta->Fill((muFwdTrack->momentum().Pt() - primtrk->pt) / primtrk->pt, muFwdTrack->momentum().PseudoRapidity());
+            h1_fwd_pt_res->Fill((fwdTrack->momentum().perp() - primtrk->pt) / primtrk->pt);
+            h2_fwd_pt_res_vs_eta->Fill((fwdTrack->momentum().perp() - primtrk->pt) / primtrk->pt, fwdTrack->momentum().pseudoRapidity());
 
             // Calorimeter energy
             for (int det = 0; det <= 3; det++) 
@@ -671,18 +725,18 @@ Int_t StHadronAnalysisMaker::Make()
             if (total_ecal_hit_energy > E_min && total_hcal_hit_energy > E_min) 
               {
                 h2_ecal_hcal_hit_energy->Fill(total_ecal_hit_energy, total_hcal_hit_energy);
-                h2_fwd_cal_energy_vs_track_pt_hit->Fill(muFwdTrack->momentum().Pt()*TMath::CosH(muFwdTrack->momentum().Eta()), total_ecal_hit_energy + total_hcal_hit_energy);
+                h2_fwd_cal_energy_vs_track_pt_hit->Fill(fwdTrack->momentum().perp()*TMath::CosH(fwdTrack->momentum().pseudoRapidity()), total_ecal_hit_energy + total_hcal_hit_energy);
                 h1_fwd_cal_energy_hit->Fill(total_ecal_hit_energy + total_hcal_hit_energy);
                 h1_fwd_cal_hit_resolution->Fill(((total_ecal_hit_energy + total_hcal_hit_energy) - primtrk->e) / primtrk->e);
-                h2_ecal_hcal_hit_energy_res_vs_eta->Fill(((total_ecal_hit_energy + total_hcal_hit_energy) - primtrk->e) / primtrk->e, muFwdTrack->momentum().PseudoRapidity());
+                h2_ecal_hcal_hit_energy_res_vs_eta->Fill(((total_ecal_hit_energy + total_hcal_hit_energy) - primtrk->e) / primtrk->e, fwdTrack->momentum().pseudoRapidity());
               }
             if (total_ecal_cluster_energy > E_min && total_hcal_cluster_energy > E_min) 
               {
                 h2_ecal_hcal_cluster_energy->Fill(total_ecal_cluster_energy, total_hcal_cluster_energy);
-                h2_fwd_cal_energy_vs_track_pt_cluster->Fill(muFwdTrack->momentum().Pt()*TMath::CosH(muFwdTrack->momentum().Eta()), total_ecal_cluster_energy + total_hcal_cluster_energy);
+                h2_fwd_cal_energy_vs_track_pt_cluster->Fill(fwdTrack->momentum().perp()*TMath::CosH(fwdTrack->momentum().pseudoRapidity()), total_ecal_cluster_energy + total_hcal_cluster_energy);
                 h1_fwd_cal_energy_cluster->Fill(total_ecal_cluster_energy + total_hcal_cluster_energy);
                 h1_fwd_cal_cluster_resolution->Fill(((total_ecal_cluster_energy + total_hcal_cluster_energy) - primtrk->e) / primtrk->e);
-                h2_ecal_hcal_cluster_energy_res_vs_eta->Fill(((total_ecal_cluster_energy + total_hcal_cluster_energy) - primtrk->e) / primtrk->e, muFwdTrack->momentum().PseudoRapidity());
+                h2_ecal_hcal_cluster_energy_res_vs_eta->Fill(((total_ecal_cluster_energy + total_hcal_cluster_energy) - primtrk->e) / primtrk->e, fwdTrack->momentum().pseudoRapidity());
               }
           }
             //dead_zone_flag = false;
@@ -735,6 +789,8 @@ Int_t StHadronAnalysisMaker::Finish( )
     h2_ecal_hcal_hit_energy->Write();
     h2_fwd_cal_energy_vs_track_pt_hit->Write();
     h2_fwd_cal_energy_vs_track_pt_cluster->Write();
+    h1_single_cluster_ecal_energy->Write();
+    h1_single_cluster_hcal_energy->Write();
     h1_fwd_cal_energy_hit->Write();
     h1_fwd_cal_energy_cluster->Write();
     h2_fwd_pt_res_vs_eta->Write();
