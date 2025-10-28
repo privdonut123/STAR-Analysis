@@ -56,6 +56,7 @@ class StFstHitCollection;
 class StHadronAnalysisMaker : public StMaker
   {  
     private:
+        StEvent* event = 0;                             // StEvent pointer to access event data
         StMuDstMaker* mMuDstMaker ;                      //  Make MuDst pointer available to member functions
 
         TH1F* h1list_mass_by_Ntower[748];      //h1list_mass_by_Ntower: invariant mass sorted by highest energy tower[64]
@@ -100,6 +101,12 @@ class StHadronAnalysisMaker : public StMaker
         TH1F* h1_geant_parent_pz = 0;
         TH1F* h1_fwd_cal_hit_resolution = 0;
         TH1F* h1_fwd_cal_cluster_resolution = 0;
+        TH1F* h1_matched_ecal_cluster_energy = 0;  // ECAL cluster energy for tracks matched to both ECAL and HCAL
+        TH1F* h1_matched_hcal_cluster_energy = 0;  // HCAL cluster energy for tracks matched to both ECAL and HCAL
+        TH1F* h1_matched_total_cluster_energy = 0; // Total cluster energy for tracks matched to both ECAL and HCAL
+        TH1F* h1_track_matching_status = 0;        // Track matching status (0=no match, 1=ECAL only, 2=HCAL only, 3=both)
+        TH1F* h1_all_track_fit_points = 0;         // Fit points distribution for all tracks
+        TH1F* h1_track_selection_status = 0;       // Track selection status (0=rejected, 1=accepted)
 
         TH2F* h2_geant_shower_proj_xy = 0;
         TH2F* h2_ecal_cluster_position = 0;        
@@ -139,6 +146,18 @@ class StHadronAnalysisMaker : public StMaker
         bool hcal_dead_zone = false;
         float E_min = 0;
         int mDebug = 1;
+        
+        // Statistics for track-cluster matching
+        int mTotalTracks = 0;
+        int mTracksWithBothMatches = 0;
+        int mTracksWithEcalOnly = 0;
+        int mTracksWithHcalOnly = 0;
+        
+        // Statistics for track selection criteria
+        int mTotalTracksFound = 0;
+        int mTracksPassingSelection = 0;
+        int mTracksRejectedNotPrimary = 0;
+        int mTracksRejectedFitPoints = 0;
 
     protected: 
       

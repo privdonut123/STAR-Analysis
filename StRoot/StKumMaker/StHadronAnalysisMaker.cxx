@@ -108,6 +108,18 @@ StHadronAnalysisMaker::StHadronAnalysisMaker(const char* name) : StMaker(name)
 
     mHistogramOutputFileName = "" ;               // Histogram Output File Name will be set inside the .C macro
     
+    // Initialize track-cluster matching statistics
+    mTotalTracks = 0;
+    mTracksWithBothMatches = 0;
+    mTracksWithEcalOnly = 0;
+    mTracksWithHcalOnly = 0;
+    
+    // Initialize track selection statistics
+    mTotalTracksFound = 0;
+    mTracksPassingSelection = 0;
+    mTracksRejectedNotPrimary = 0;
+    mTracksRejectedFitPoints = 0;
+    
   }
 
 StHadronAnalysisMaker::~StHadronAnalysisMaker()
@@ -285,12 +297,47 @@ Int_t StHadronAnalysisMaker::Init()
     h1_fwd_cal_energy_cluster->SetXTitle("Energy [GeV]");
     h1_fwd_cal_energy_cluster->SetYTitle("counts");
 
+    h1_matched_ecal_cluster_energy = new TH1F("h1_matched_ecal_cluster_energy", "ECAL cluster energy for tracks matched to both ECAL and HCAL", bins, 0, 150);
+    h1_matched_ecal_cluster_energy->SetXTitle("ECAL Energy [GeV]");
+    h1_matched_ecal_cluster_energy->SetYTitle("counts");
+    h1_matched_hcal_cluster_energy = new TH1F("h1_matched_hcal_cluster_energy", "HCAL cluster energy for tracks matched to both ECAL and HCAL", bins, 0, 150);
+    h1_matched_hcal_cluster_energy->SetXTitle("HCAL Energy [GeV]");
+    h1_matched_hcal_cluster_energy->SetYTitle("counts");
+    h1_matched_total_cluster_energy = new TH1F("h1_matched_total_cluster_energy", "Total cluster energy for tracks matched to both ECAL and HCAL", bins, 0, 300);
+    h1_matched_total_cluster_energy->SetXTitle("Total Energy [GeV]");
+    h1_matched_total_cluster_energy->SetYTitle("counts");
+    h1_track_matching_status = new TH1F("h1_track_matching_status", "Track matching status", 4, -0.5, 3.5);
+    h1_track_matching_status->SetXTitle("Matching Status (0=no match, 1=ECAL only, 2=HCAL only, 3=both)");
+    h1_track_matching_status->SetYTitle("counts");
+    h1_all_track_fit_points = new TH1F("h1_all_track_fit_points", "Fit points distribution for all tracks", 20, -0.5, 19.5);
+    h1_all_track_fit_points->SetXTitle("Number of fit points");
+    h1_all_track_fit_points->SetYTitle("counts");
+    h1_track_selection_status = new TH1F("h1_track_selection_status", "Track selection status", 2, -0.5, 1.5);
+    h1_track_selection_status->SetXTitle("Selection Status (0=rejected, 1=accepted)");
+    h1_track_selection_status->SetYTitle("counts");
 
     return kStOK;
   }
 
 Int_t StHadronAnalysisMaker::Make()
   { // Do every event
+	  event = (StEvent*)GetInputDS("StEvent");
+    if (!event) 
+      {
+        if (mDebug > 0)
+          {
+            cerr << termcolor::red << "StKumMaker::Make did not find StEvent" << endl << termcolor::reset;
+          }
+        return kStErr;
+      }
+    else
+      {
+        if (mDebug > 0)
+          {
+            cout << termcolor::green << "Got StEvent from input" << endl << termcolor::reset;
+          }
+      }
+      
 	  mMuDstMaker = (StMuDstMaker*)GetInputDS("MuDst");
     if (!mMuDstMaker)
       {
@@ -298,9 +345,8 @@ Int_t StHadronAnalysisMaker::Make()
           {
             cout << termcolor::bold << termcolor::red << "Could not retrieve MuDstMaker from the chain" << termcolor::reset << endl;
           }
-          return kStWarn;
-      }
-      
+        return kStWarn;
+      } 
     else
       {
         if (mDebug > 0) 
@@ -326,72 +372,37 @@ Int_t StHadronAnalysisMaker::Make()
           }
       }
       
-
-    StMuEvent* muEvent =  muDst->event();
-    if ( !muEvent )
-      {
-        if (mDebug > 0) 
-          {
-            cerr << termcolor::red << "Failed to get MuEvent from MuDst" << endl << termcolor::reset;
-          }
-        return kStErr;
-      }
-    else
-      {
-        if (mDebug > 0) 
-          {
-            cout << termcolor::green << "Got MuEvent from MuDst" << endl << termcolor::reset;
-          }
-      }
-
-    StMuTriggerIdCollection* TrigMuColl = &(muEvent->triggerIdCollection());
-    if(!TrigMuColl)
-      {
-        if (mDebug > 0) 
-          {
-            cerr << termcolor::red << "StFmsMaker::PopulateEventInfo - !TrigMuColl" << termcolor::reset << endl;
-          }
-        return kStErr;
-      }
-    else 
-      {
-        if (mDebug > 0) 
-          {
-            cout << termcolor::green << "Got TriggerIdCollection from MuEvent" << endl << termcolor::reset;
-          }
-      }
-
-	  StEvent* event = (StEvent*)GetInputDS("StEvent");
-    if (!event) 
-      {
-        if (mDebug > 0)
-          {
-            cerr << termcolor::red << "StKumMaker::Make did not find StEvent" << endl << termcolor::reset;
-          }
-        return kStErr;
-      }
-    else
-      {
-        if (mDebug > 0)
-          {
-            cout << termcolor::green << "Got StEvent from input" << endl << termcolor::reset;
-          }
-      }
-    
-    // StFstHitCollection* fsthc = event->fstHitCollection();
-    // if (!fsthc)
+    // StMuEvent* muEvent =  muDst->event();
+    // if ( !muEvent )
     //   {
-    //     if (mDebug > 0)
+    //     if (mDebug > 0) 
     //       {
-    //         cerr << termcolor::red << "No FST collection" << termcolor::reset << endl;
+    //         cerr << termcolor::red << "Failed to get MuEvent from MuDst" << endl << termcolor::reset;
     //       }
     //     return kStErr;
     //   }
     // else
     //   {
-    //     if (mDebug > 0)
+    //     if (mDebug > 0) 
     //       {
-    //         cout << termcolor::green << "Got FST collection" << endl << termcolor::reset;
+    //         cout << termcolor::green << "Got MuEvent from MuDst" << endl << termcolor::reset;
+    //       }
+    //   }
+
+    // StMuTriggerIdCollection* TrigMuColl = &(muEvent->triggerIdCollection());
+    // if(!TrigMuColl)
+    //   {
+    //     if (mDebug > 0) 
+    //       {
+    //         cerr << termcolor::red << "StFmsMaker::PopulateEventInfo - !TrigMuColl" << termcolor::reset << endl;
+    //       }
+    //     return kStErr;
+    //   }
+    // else 
+    //   {
+    //     if (mDebug > 0) 
+    //       {
+    //         cout << termcolor::green << "Got TriggerIdCollection from MuEvent" << endl << termcolor::reset;
     //       }
     //   }
 
@@ -429,42 +440,61 @@ Int_t StHadronAnalysisMaker::Make()
             cout << termcolor::green << "Got FwdTrack collection" << endl << termcolor::reset;
           }
       }
-    mftc = muDst->muFwdTrackCollection();
-    if (!mftc)
-      {
-        if (mDebug > 0)
-          {
-            cerr << termcolor::bold << termcolor::red <<  "No muFwd collection" << termcolor::reset << endl;
-          }
-          return kStErr;
-      }
-    else
-      {
-        if (mDebug > 0)
-          {
-            cout << termcolor::green << "Got muFwd collection" << endl << termcolor::reset;
-          }
-      }
+    
+    // mftc = muDst->muFwdTrackCollection();
+    // if (!mftc)
+    //   {
+    //     if (mDebug > 0)
+    //       {
+    //         cerr << termcolor::bold << termcolor::red <<  "No muFwd collection" << termcolor::reset << endl;
+    //       }
+    //     return kStErr;
+    //   }
+    // else
+    //   {
+    //     if (mDebug > 0)
+    //       {
+    //         cout << termcolor::green << "Got muFwd collection" << endl << termcolor::reset;
+    //       }
+    //   }
 
     int total_nc = 0;
     int total_np = 0;
     
     //cout << termcolor::magenta << "Number of FST hits: " << fsthc->getNumRawHits() << termcolor::reset << endl;
   
-    if(mDebug > 0)
-      {   
-        cout << termcolor::red << "Number of muFwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
-      }
+    // if(mDebug > 0)
+    //   {   
+    //     cout << termcolor::red << "Number of muFwdTracks: " << mftc->numberOfFwdTracks() << termcolor::reset << endl;
+    //   }
     // h1_num_of_fwd_tracks -> Fill(mftc->numberOfFwdTracks());
     
-    if (ftc->numberOfTracks() <= 4 && ftc->numberOfTracks() > 1) // CURRENT HACK OF FWDTRACKMAKER
+    if (true) // CURRENT HACK OF FWDTRACKMAKER
+    for ( int itrk = 0 ; itrk < ftc->numberOfTracks() ; itrk++ )
       {
-        StFwdTrack* fwdTrack = ftc->tracks()[1]; // 0 = global track, 1 = primary track
+        if (mDebug > 0)
+          {
+            cout << termcolor::yellow << "Processing track " << itrk << " of " << ftc->numberOfTracks() << termcolor::reset << endl;
+          }
+        StFwdTrack* fwdTrack = ftc->tracks()[itrk]; // 0 = global track, 1 = primary track
         h1_num_of_fwd_tracks -> Fill(ftc->numberOfTracks());
         
-        // if(fwdTrack->isPrimary() == true && fwdTrack->numberOfFitPoints() == 8)
-        if(fwdTrack->numberOfFitPoints() >= 8) // CURRENT HACK OF FWDTRACKMAKER
+        mTotalTracksFound++;
+        
+        // Fill histogram with fit points for all tracks
+        h1_all_track_fit_points->Fill(fwdTrack->numberOfFitPoints());
+        
+        // Apply stricter track selection criteria: must be primary and have exactly 4 fit points
+        if(fwdTrack->isPrimaryTrack() == true && fwdTrack->numberOfFitPoints() == 4)
           {
+            mTracksPassingSelection++;
+            h1_track_selection_status->Fill(1); // Track accepted
+            if (mDebug > 0)
+              {
+                cout << termcolor::green << termcolor::bold << "✓ Track passes selection criteria: "
+                     << "isPrimary=" << (fwdTrack->isPrimaryTrack() ? "true" : "false") 
+                     << ", nFitPoints=" << fwdTrack->numberOfFitPoints() << termcolor::reset << endl;
+              }
             h1_fwd_track_is_primary->Fill(1);
             float prim_trk_energy;
             StPtrVecFcsCluster& trackMatchEcalClusters = fwdTrack->ecalClusters();
@@ -485,36 +515,94 @@ Int_t StHadronAnalysisMaker::Make()
                 cout << termcolor::green << "Number of track matched HCal clusters: " << trackMatchHcalClusters.size() << termcolor::reset << endl;
               }
             
+            // Check if track matches to both ECAL and HCAL clusters with specified criteria
+            bool hasValidEcalMatch = false;
+            bool hasValidHcalMatch = false;
+            float totalEcalEnergy = 0.0;
+            float totalHcalEnergy = 0.0;
+            
+            // Check ECAL clusters with tower threshold criteria (≤3 towers)
             for( int i = 0; i < trackMatchEcalClusters.size(); i++ )
               {
                 StFcsCluster* ecalCluster = trackMatchEcalClusters[i];
-                if (ecalCluster->nTowers() <= 2)
+                if (ecalCluster->nTowers() <= 3)  // Apply tower threshold criterion for ECAL (≤3)
                   {
+                    hasValidEcalMatch = true;
+                    totalEcalEnergy += ecalCluster->energy();
                     if (mDebug > 0)
                       {
-                        cout << termcolor::blue << "ECal Cluster: " << ecalCluster->id() 
+                        cout << termcolor::cyan << "Valid ECAL Cluster: " << ecalCluster->id() 
                              << ", energy: " << ecalCluster->energy() 
                              << ", number of towers: " << ecalCluster->nTowers() 
                              << termcolor::reset << endl;
                       }
                     h1_single_cluster_ecal_energy -> Fill(ecalCluster->energy());    
-
                   }
-              }
-            
-            for( int i = 0; i < trackMatchHcalClusters.size(); i++ )
-              {
-                StFcsCluster* hcalCluster = trackMatchHcalClusters[i];
-                if (hcalCluster->nTowers() <= 2)
+                else
                   {
                     if (mDebug > 0)
                       {
-                        cout << termcolor::blue << "HCal Cluster: " << hcalCluster->id() 
-                             << ", energy: " << hcalCluster->energy() 
-                             << ", number of towers: " << hcalCluster->nTowers()
-                             << termcolor::reset << endl;
+                        cout << termcolor::red << "ECAL Cluster rejected (nTowers=" << ecalCluster->nTowers() 
+                             << " > 3): " << ecalCluster->id() << termcolor::reset << endl;
                       }
-                    h1_single_cluster_hcal_energy -> Fill(hcalCluster->energy());
+                  }
+              }
+            
+            // Check HCAL clusters (no specific tower threshold)
+            for( int i = 0; i < trackMatchHcalClusters.size(); i++ )
+              {
+                StFcsCluster* hcalCluster = trackMatchHcalClusters[i];
+                hasValidHcalMatch = true;
+                totalHcalEnergy += hcalCluster->energy();
+                if (mDebug > 0)
+                  {
+                    cout << termcolor::cyan << "Valid HCAL Cluster: " << hcalCluster->id() 
+                         << ", energy: " << hcalCluster->energy() 
+                         << ", number of towers: " << hcalCluster->nTowers()
+                         << termcolor::reset << endl;
+                  }
+                h1_single_cluster_hcal_energy -> Fill(hcalCluster->energy());
+              }
+
+            // Update statistics and fill matching status histogram
+            mTotalTracks++;
+            int matchingStatus = 0;
+            if (hasValidEcalMatch && hasValidHcalMatch) {
+                matchingStatus = 3;
+                mTracksWithBothMatches++;
+            }
+            else if (hasValidEcalMatch) {
+                matchingStatus = 1;
+                mTracksWithEcalOnly++;
+            }
+            else if (hasValidHcalMatch) {
+                matchingStatus = 2;
+                mTracksWithHcalOnly++;
+            }
+            h1_track_matching_status->Fill(matchingStatus);
+
+            // Fill new histograms only if track matches to both ECAL and HCAL with criteria
+            if (hasValidEcalMatch && hasValidHcalMatch)
+              {
+                h1_matched_ecal_cluster_energy->Fill(totalEcalEnergy);
+                h1_matched_hcal_cluster_energy->Fill(totalHcalEnergy);
+                h1_matched_total_cluster_energy->Fill(totalEcalEnergy + totalHcalEnergy);
+                
+                if (mDebug > 0)
+                  {
+                    cout << termcolor::green << termcolor::bold << "✓ Track matches both ECAL and HCAL criteria!" << endl;
+                    cout << "  Total ECAL energy: " << totalEcalEnergy << " GeV" << endl;
+                    cout << "  Total HCAL energy: " << totalHcalEnergy << " GeV" << endl;
+                    cout << "  Combined energy: " << (totalEcalEnergy + totalHcalEnergy) << " GeV" << termcolor::reset << endl;
+                  }
+              }
+            else
+              {
+                if (mDebug > 0)
+                  {
+                    cout << termcolor::red << "✗ Track does not match both ECAL and HCAL criteria. "
+                         << "ECAL match: " << (hasValidEcalMatch ? "YES" : "NO") 
+                         << ", HCAL match: " << (hasValidHcalMatch ? "YES" : "NO") << termcolor::reset << endl;
                   }
               }
 
@@ -739,6 +827,21 @@ Int_t StHadronAnalysisMaker::Make()
                 h2_ecal_hcal_cluster_energy_res_vs_eta->Fill(((total_ecal_cluster_energy + total_hcal_cluster_energy) - primtrk->e) / primtrk->e, fwdTrack->momentum().pseudoRapidity());
               }
           }
+        else
+          {
+            // Track rejection statistics
+            if (!fwdTrack->isPrimaryTrack()) mTracksRejectedNotPrimary++;
+            if (fwdTrack->numberOfFitPoints() != 4) mTracksRejectedFitPoints++;
+            h1_track_selection_status->Fill(0); // Track rejected
+            
+            if (mDebug > 0)
+              {
+                cout << termcolor::red << "✗ Track rejected: "
+                     << "isPrimary=" << (fwdTrack->isPrimaryTrack() ? "true" : "false") 
+                     << ", nFitPoints=" << fwdTrack->numberOfFitPoints() 
+                     << " (required: isPrimary=true, nFitPoints=4)" << termcolor::reset << endl;
+              }
+          }
             //dead_zone_flag = false;
         }
       return kStOK ;
@@ -793,11 +896,49 @@ Int_t StHadronAnalysisMaker::Finish( )
     h1_single_cluster_hcal_energy->Write();
     h1_fwd_cal_energy_hit->Write();
     h1_fwd_cal_energy_cluster->Write();
+    h1_matched_ecal_cluster_energy->Write();
+    h1_matched_hcal_cluster_energy->Write();
+    h1_matched_total_cluster_energy->Write();
+    h1_track_matching_status->Write();
+    h1_all_track_fit_points->Write();
+    h1_track_selection_status->Write();
     h2_fwd_pt_res_vs_eta->Write();
     h2_ecal_hcal_cluster_energy_res_vs_eta->Write();
     h2_ecal_hcal_hit_energy_res_vs_eta->Write();
     mHistogramOutput->Write();
     mHistogramOutput->Close();
+
+    // Print comprehensive analysis statistics
+    cout << termcolor::yellow << termcolor::bold << "\n=== TRACK SELECTION STATISTICS ===" << termcolor::reset << endl;
+    cout << termcolor::cyan << "Total tracks found: " << mTotalTracksFound << termcolor::reset << endl;
+    cout << termcolor::green << "Tracks passing selection (isPrimary=true AND nFitPoints=4): " << mTracksPassingSelection;
+    if (mTotalTracksFound > 0) cout << " (" << (100.0 * mTracksPassingSelection / mTotalTracksFound) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::red << "Tracks rejected (not primary): " << mTracksRejectedNotPrimary;
+    if (mTotalTracksFound > 0) cout << " (" << (100.0 * mTracksRejectedNotPrimary / mTotalTracksFound) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::red << "Tracks rejected (fit points ≠ 4): " << mTracksRejectedFitPoints;
+    if (mTotalTracksFound > 0) cout << " (" << (100.0 * mTracksRejectedFitPoints / mTotalTracksFound) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::yellow << "Selection criteria: isPrimary=true AND nFitPoints=4" << termcolor::reset << endl;
+
+    cout << termcolor::yellow << termcolor::bold << "\n=== TRACK-CLUSTER MATCHING STATISTICS ===" << termcolor::reset << endl;
+    cout << termcolor::cyan << "Tracks analyzed for matching: " << mTotalTracks << termcolor::reset << endl;
+    cout << termcolor::green << "Tracks with both ECAL and HCAL matches: " << mTracksWithBothMatches;
+    if (mTotalTracks > 0) cout << " (" << (100.0 * mTracksWithBothMatches / mTotalTracks) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::magenta << "Tracks with ECAL match only: " << mTracksWithEcalOnly;
+    if (mTotalTracks > 0) cout << " (" << (100.0 * mTracksWithEcalOnly / mTotalTracks) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::magenta << "Tracks with HCAL match only: " << mTracksWithHcalOnly;
+    if (mTotalTracks > 0) cout << " (" << (100.0 * mTracksWithHcalOnly / mTotalTracks) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::red << "Tracks with no matches: " << (mTotalTracks - mTracksWithBothMatches - mTracksWithEcalOnly - mTracksWithHcalOnly);
+    if (mTotalTracks > 0) cout << " (" << (100.0 * (mTotalTracks - mTracksWithBothMatches - mTracksWithEcalOnly - mTracksWithHcalOnly) / mTotalTracks) << "%)";
+    cout << termcolor::reset << endl;
+    cout << termcolor::yellow << "ECAL tower threshold: ≤3 towers" << termcolor::reset << endl;
+    cout << termcolor::yellow << "HCAL tower threshold: no limit" << termcolor::reset << endl;
+    cout << termcolor::yellow << termcolor::bold << "=============================================" << termcolor::reset << endl;
     
     return kStOK;
  }
