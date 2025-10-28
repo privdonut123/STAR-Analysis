@@ -32,7 +32,7 @@ class StMuEvent    ;
 class StMuTrack    ;
 //class StSpinDbMaker;
 class StEvent;
-
+class StPicoEvent;
 class TFile;
 class TH1F;
 class TH2F;
@@ -58,6 +58,7 @@ class StFcsMipFinderForHcal : public StMaker
     private:
         StMuDstMaker* mMuDstMaker ;                      //  Make MuDst pointer available to member functions
         StEvent* event = 0;                              // StEvent pointer to access event data
+        StPicoEvent* picoEvent = 0;                      // StPicoEvent pointer to access event data
 
         TH1F* h1list_mass_by_Ntower[748];      //h1list_mass_by_Ntower: invariant mass sorted by highest energy tower[64]
         TH1F* h1list_mass_by_Stower[748];      //h1list_mass_by_Stower: invariant mass sorted by highest energy tower[64]
@@ -100,6 +101,7 @@ class StFcsMipFinderForHcal : public StMaker
         TH1F* h1_fwd_pt_res = 0;
         
         TH1F* h1_fwd_track_charge = 0;
+        TH1F* h1_fwd_track_chi2 = 0;
         TH1F* h1_fwd_track_chi2_per_ndf = 0;
 
         TH2F* h2_geant_shower_proj_xy = 0;

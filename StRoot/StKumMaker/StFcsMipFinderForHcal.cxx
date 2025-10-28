@@ -184,6 +184,9 @@ Int_t StFcsMipFinderForHcal::Init()
     h1_fwd_track_pt = new TH1F("h1_fwd_track_pt", "forward track transverse momentum", bins, 0, 15);
     h1_fwd_track_pt->SetXTitle("p_{T} [GeV/c]");
     h1_fwd_track_pt->SetYTitle("counts");
+    h1_fwd_track_chi2 = new TH1F("h1_fwd_track_chi2", "forward track chi2", 200, 0, 200);
+    h1_fwd_track_chi2->SetXTitle("#chi^{2}");
+    h1_fwd_track_chi2->SetYTitle("counts");
     h1_fwd_track_chi2_per_ndf = new TH1F("h1_fwd_track_chi2_per_ndf", "forward track chi2 per ndf", 200, 0, 20);
     h1_fwd_track_chi2_per_ndf->SetXTitle("#chi^{2}/ndf");
     h1_fwd_track_chi2_per_ndf->SetYTitle("counts");
@@ -312,7 +315,8 @@ Int_t StFcsMipFinderForHcal::Finish( )
     h1_fwd_track_num_of_fit_points->Write();
     h1_fwd_track_charge->Write();
     h1_fwd_track_pt->Write();
-    h1_fwd_track_chi2_per_ndf->Write();
+    h1_fwd_track_chi2->Write();
+    // h1_fwd_track_chi2_per_ndf->Write();
     h1_num_of_track_matched_hcal_clusters->Write();
     h1_num_of_track_matched_ecal_clusters->Write();
     h1_track_match_cluster_hcal_energy->Write();
@@ -514,18 +518,32 @@ Int_t StFcsMipFinderForHcal::Make()
               }
 
             h1_fwd_track_num_of_fit_points -> Fill(fwdTrack->numberOfFitPoints());
-            h1_fwd_track_charge -> Fill((int)fwdTrack->charge());
-            h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
-            h1_fwd_track_chi2_per_ndf -> Fill(fwdTrack->chi2() / fwdTrack->ndf());
-            vector<StFwdTrack> fwdTrackClusterIdArray;
-
-            if (fwdTrack->isPrimaryTrack() == true && fwdTrack->numberOfFitPoints() >= 8 && fwdTrack->chi2() / fwdTrack->ndf() < 2.0) 
+            // h1_fwd_track_charge -> Fill((int)fwdTrack->charge());
+            // h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
+            // h1_fwd_track_chi2_per_ndf -> Fill(fwdTrack->chi2() / fwdTrack->ndf());
+            h1_fwd_track_chi2 -> Fill(fwdTrack->chi2());
+            if (mDebug > 0)
               {
-                // h1_fwd_track_charge -> Fill((int)fwdTrack->charge());
-                // h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
+                // cout << termcolor::blue << "chi2/ndf: " << fwdTrack->chi2() / fwdTrack->ndf() << endl;
+                cout << termcolor::blue << "chi2: " << fwdTrack->chi2() << endl;
+                cout << termcolor::blue << "ndf: " << fwdTrack->ndf() << endl;
+                cout << termcolor::blue << "Number of fit points: " << fwdTrack->numberOfFitPoints() << endl;
+                cout << termcolor::blue << "Charge: " << (int)fwdTrack->charge() << endl;
+                cout << termcolor::blue << "Momentum: " << fwdTrack->momentum() << endl;
+              }
+            vector<StFwdTrack> fwdTrackClusterIdArray;
+            // Issue with current fwdtrack maker, chi2/ndf is infinite
+            // if (fwdTrack->isPrimaryTrack() == true && fwdTrack->numberOfFitPoints() >= 8 && fwdTrack->chi2() / fwdTrack->ndf() < 2.0) 
+            if (fwdTrack->isPrimaryTrack() == true && fwdTrack->numberOfFitPoints() >= 4 && fwdTrack->chi2() < 20)
+              {
+                h1_fwd_track_charge -> Fill((int)fwdTrack->charge());
+                h1_fwd_track_pt -> Fill(fwdTrack->momentum().perp());
                 // h1_fwd_track_chi2_per_ndf -> Fill(fwdTrack->chi2() / fwdTrack->ndf());
 
-                
+                cout << termcolor::bold << termcolor::blue << "chi2: " << fwdTrack->chi2() << endl;
+                cout << termcolor::bold << termcolor::blue << "ndf: " << fwdTrack->ndf() << endl;
+                cout << termcolor::bold << termcolor::blue << "Charge: " << (int)fwdTrack->charge() << endl;
+                cout << termcolor::bold << termcolor::blue << "Momentum: " << fwdTrack->momentum() << endl;
                   
 
                 //TOF mult cut                                                                                                     
